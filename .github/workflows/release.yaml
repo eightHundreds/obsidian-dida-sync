@@ -11,6 +11,7 @@ jobs:
   build:
     name: 构建
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - name: 源仓库切换分支
         uses: actions/checkout@v3
