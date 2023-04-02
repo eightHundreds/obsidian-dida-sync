@@ -25,6 +25,8 @@ jobs:
       - name: 创建release
         id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.get_tag.outputs.tag_name }}
           release_name: ${{ steps.get_tag.outputs.tag_name }}
