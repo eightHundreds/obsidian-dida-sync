@@ -4,6 +4,7 @@ import {requestUrl} from 'obsidian';
 import qs from 'querystring';
 import {DidaFrontMatter} from './types';
 import {TaskStatus} from './constants';
+import debug from 'debug';
 
 type DiDa365APIOptions = {
 	username: string;
@@ -51,15 +52,18 @@ export class DiDa365API {
 	private cookieHeader: string;
 	private expTime: number;
 	private readonly options: Required<DiDa365APIOptions>;
+	private readonly log: (...args: any[]) => any;
 	constructor(options: DiDa365APIOptions) {
 		this.options = {
 			host: 'https://api.dida365.com',
 			loginHost: 'https://www.dida365.com',
 			...options,
 		};
+		this.log = debug('dida365:api');
 	}
 
 	public async getItems(filterOptions?: DidaFrontMatter) {
+		this.log('getItem filterOptions', filterOptions);
 		await this.checkLogin();
 
 		const startDateTimestamp = filterOptions?.startDate ? dayjs(filterOptions.startDate).valueOf() : dayjs().subtract(180, 'day').valueOf();
@@ -75,7 +79,9 @@ export class DiDa365API {
 
 			return false;
 		});
+
 		const completed = (await this.getAllCompleted(startDateTimestamp));
+
 		const noAbandoned = (item: Item) => item.status !== TaskStatus.Abandoned;
 		const filterProjectId = (item: Item) => {
 			if (!filterOptions?.projectId) {
@@ -98,7 +104,21 @@ export class DiDa365API {
 			return true;
 		};
 
-		const allTask = [...uncompleted, ...completed].filter(noAbandoned).filter(filterProjectId).filter(filterTags).sort((a, b) => dayjs(b.createdTime).valueOf() - dayjs(a.createdTime).valueOf());
+		this.log('uncompleted', uncompleted);
+		this.log('completed', completed);
+		let allTask = [...uncompleted, ...completed];
+		allTask = allTask.filter(noAbandoned);
+		this.log('allTask(after noAbandoned)', allTask);
+
+		allTask = allTask.filter(filterProjectId);
+		this.log('allTask(after filterProjectId)', allTask);
+
+		allTask = allTask.filter(filterTags).sort((a, b) => dayjs(b.createdTime).valueOf() - dayjs(a.createdTime).valueOf());
+		this.log('allTask(after filterTags)', allTask);
+
+		allTask = allTask.sort((a, b) => dayjs(b.createdTime).valueOf() - dayjs(a.createdTime).valueOf());
+		this.log('allTask(after sort)', allTask);
+
 		return allTask;
 	}
 
@@ -117,11 +137,21 @@ export class DiDa365API {
 
 	private async getAllCompleted(startData: number) {
 		const url = `${this.options.host}/api/v2/project/all/completed`;
-
+		const params = {
+			from: dayjs(startData).format('YYYY-MM-DD%20HH:mm:ss'),
+			to: dayjs().format('YYYY-MM-DD%20HH:mm:ss'),
+			limit: 999,
+		};
+		this.log('getAllCompleted params:', params, `${url}?${qs.stringify(params, undefined, undefined, {
+			encodeURIComponent(str) {
+				return str;
+			},
+		})}`);
 		const result = await requestUrl({
-			url: `${url}?${qs.stringify({
-				from: dayjs(startData).format('YYYY-MM-DD HH:mm:ss'),
-				to: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+			url: `${url}?${qs.stringify(params, undefined, undefined, {
+				encodeURIComponent(str) {
+					return str;
+				},
 			})}`,
 			headers: {
 				Cookie: this.cookieHeader,

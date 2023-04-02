@@ -6,33 +6,40 @@ import {
 	Setting,
 } from 'obsidian';
 import {DiDa365API} from './dida';
+import debug from 'debug';
 import {DidaFrontMatter} from './types';
 import {taskToMarkdown} from './utils';
 
 type DiDaSyncPluginSettings = {
 	didaPassword: string;
 	didaUserName: string;
+	debug: boolean;
 };
 
 const defaultSettings: DiDaSyncPluginSettings = {
 	didaPassword: '',
 	didaUserName: '',
+	debug: false,
 };
 
 export default class DiDaSyncPlugin extends Plugin {
 	settings: DiDaSyncPluginSettings;
 	didaClient: DiDa365API;
-
+	log: (...args: any[]) => any;
 	async onload() {
 		await this.loadSettings();
 		this.didaClient = new DiDa365API({
 			username: this.settings.didaUserName,
 			password: this.settings.didaPassword,
 		});
+		this.log = debug('dida365:plugin');
+		if (this.settings.debug) {
+			debug.enable('dida365:*');
+		}
 
 		this.registerCommends();
-
 		this.addSettingTab(new DidaSettingTab(this.app, this));
+		this.log('init done');
 	}
 
 	registerCommends() {
@@ -131,6 +138,16 @@ class DidaSettingTab extends PluginSettingTab {
 					this.plugin.settings.didaPassword = value;
 					await this.plugin.saveSettings();
 				}),
+		);
+
+		new Setting(containerEl).setName('调试模式').addToggle(toggle =>
+			toggle
+				.setValue(this.plugin.settings.debug)
+				.onChange(async value => {
+					this.plugin.settings.debug = value;
+					await this.plugin.saveSettings();
+				},
+				),
 		);
 	}
 }
