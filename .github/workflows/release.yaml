@@ -69,6 +69,8 @@ jobs:
       - name: 上传zip 到release
         id: upload-zip
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
             upload_url: ${{ steps.create_release.outputs.upload_url }}
             asset_path: ${{ env.PLUGIN_NAME }}.zip
@@ -77,6 +79,8 @@ jobs:
       - name: 上传 main.js 到release
         id: upload-main
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
             upload_url: ${{ steps.create_release.outputs.upload_url }}
             asset_path: ./dist/main.js
@@ -85,6 +89,8 @@ jobs:
       - name: 上传 manifest.json 到release
         id: upload-manifest
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
             upload_url: ${{ steps.create_release.outputs.upload_url }}
             asset_path: ./dist/manifest.json
