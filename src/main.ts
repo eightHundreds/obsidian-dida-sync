@@ -63,6 +63,7 @@ export default class DiDaSyncPlugin extends Plugin {
 				const tasks = await this.didaClient.getItems({
 					startDate,
 					tags,
+					projectId: didaConfig.projectId,
 				});
 				const mdText = taskToMarkdown(tasks);
 				const currentText = editor.getValue();
