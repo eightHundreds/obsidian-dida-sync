@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-dida-sync",
+	"name": "Dida Todo Sync",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "滴答清单同步",
+	"author": "Obsidian",
+	"fundingUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+	"isDesktopOnly": false
+}

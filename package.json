@@ -1,0 +1,32 @@
+{
+	"name": "obsidian-dida-sync",
+	"version": "1.0.0",
+	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"main": "main.js",
+	"scripts": {
+		"build": "obsidian-plugin build src/main.ts",
+		"dev": "obsidian-plugin dev src/main.ts",
+		"version": "node version-bump.mjs && git add manifest.json versions.json"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "GPL-3.0",
+	"devDependencies": {
+		"@types/node": "^16.11.6",
+		"@typescript-eslint/eslint-plugin": "^5.56.0",
+		"@typescript-eslint/parser": "^5.56.0",
+		"builtin-modules": "3.3.0",
+		"esbuild": "0.17.3",
+		"eslint": "^8.36.0",
+		"eslint-config-xo": "^0.43.1",
+		"eslint-config-xo-typescript": "^0.56.0",
+		"moment": "^2.29.4",
+		"obsidian": "latest",
+		"obsidian-plugin-cli": "^0.9.0",
+		"tslib": "2.4.0",
+		"typescript": "4.7.4"
+	},
+	"dependencies": {
+		"dayjs": "^1.11.7"
+	}
+}
