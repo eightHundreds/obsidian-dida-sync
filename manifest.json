@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-dida-sync",
 	"name": "Dida Todo Sync",
-	"version": "1.2.2",
+	"version": "1.2.3",
 	"minAppVersion": "0.15.0",
 	"description": "滴答清单同步",
 	"author": "Obsidian",
