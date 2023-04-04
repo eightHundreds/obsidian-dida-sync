@@ -51,8 +51,12 @@ export default class DiDaSyncPlugin extends Plugin {
 				const {file} = ctx as MarkdownView;
 				const fileCache = this.app.metadataCache.getFileCache(file);
 				const didaConfig = fileCache?.frontmatter?.dida as DidaFrontMatter;
-				if (checking) {
-					return Boolean(file?.extension === 'md' && didaConfig && fileCache);
+				if (file?.extension === 'md' && didaConfig && fileCache) {
+					if (!checking) {
+						new Notice('未在当前笔记发现滴答清单相关配置');
+					}
+
+					return false;
 				}
 
 				const tags = Array.isArray(didaConfig.tags) ? didaConfig.tags : [didaConfig.tags].filter((v: any): v is string => Boolean(v));
