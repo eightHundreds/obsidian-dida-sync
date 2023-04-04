@@ -1,5 +1,6 @@
 import {
 	App,
+	MarkdownView,
 	Notice,
 	Plugin,
 	PluginSettingTab,
@@ -46,45 +47,34 @@ export default class DiDaSyncPlugin extends Plugin {
 		this.addCommand({
 			id: 'sync-current-file',
 			name: '同步当前笔记',
-			editorCallback: async (editor, ctx) => {
-				const {file} = ctx;
-
-				if (file?.extension !== 'md') {
-					return false;
-				}
-
+			editorCheckCallback: (checking, editor, ctx) => {
+				const {file} = ctx as MarkdownView;
 				const fileCache = this.app.metadataCache.getFileCache(file);
-				if (!fileCache) {
-					return;
+				const didaConfig = fileCache?.frontmatter?.dida as DidaFrontMatter;
+				if (checking) {
+					return Boolean(file?.extension === 'md' && didaConfig && fileCache);
 				}
-
-				if (!fileCache.frontmatter?.dida) {
-					new Notice('未在当前笔记发现滴答清单相关配置');
-					return;
-				}
-
-				const didaConfig = fileCache.frontmatter?.dida as DidaFrontMatter;
 
 				const tags = Array.isArray(didaConfig.tags) ? didaConfig.tags : [didaConfig.tags].filter((v: any): v is string => Boolean(v));
 				const {startDate} = didaConfig;
-				const tasks = await this.didaClient.getItems({
+				void this.didaClient.getItems({
 					startDate,
 					tags,
 					projectId: didaConfig.projectId,
-				});
-				const mdText = taskToMarkdown(tasks);
-				const currentText = editor.getValue();
+				}).then(tasks => {
+					const mdText = taskToMarkdown(tasks);
+					const currentText = editor.getValue();
+					// 获得frontmatter的位置
+					const startOfFrontmatter = currentText.indexOf('---');
+					const endOfFrontmatter = currentText.indexOf('---', startOfFrontmatter + 3);
+					const lineOfFrontmatter = currentText.substring(startOfFrontmatter, endOfFrontmatter).split('\n').length;
 
-				// 获得frontmatter的位置
-				const startOfFrontmatter = currentText.indexOf('---');
-				const endOfFrontmatter = currentText.indexOf('---', startOfFrontmatter + 3);
-				const lineOfFrontmatter = currentText.substring(startOfFrontmatter, endOfFrontmatter).split('\n').length;
-
-				editor.replaceRange(mdText, {line: lineOfFrontmatter, ch: 0}, {
-					line: editor.lastLine() + 1,
-					ch: 0,
+					editor.replaceRange(mdText, {line: lineOfFrontmatter, ch: 0}, {
+						line: editor.lastLine() + 1,
+						ch: 0,
+					});
+					new Notice('同步成功');
 				});
-				new Notice('同步成功');
 
 				return true;
 			},
