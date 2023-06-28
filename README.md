@@ -1,5 +1,7 @@
 # 滴答清单同步
 
+建议使用[obsidian42-brat](https://github.com/TfTHacker/obsidian42-brat)安装
+
 ## 快速手上
 
 0. 在配置中输入滴答清单账号密码
