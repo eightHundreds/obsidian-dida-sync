@@ -12,7 +12,5 @@ void i18next.init({
 });
 
 const {t} = i18next;
-setTimeout(() => {
-  console.log('123123', t('inputUserName'));
-}, 100);
+
 export {t};
