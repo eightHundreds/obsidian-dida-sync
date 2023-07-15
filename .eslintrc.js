@@ -16,6 +16,7 @@ module.exports = {
 			],
 			rules: {
 				'no-new': 'off',
+				'@typescript-eslint/indent': ['error', 2],
 				'@typescript-eslint/consistent-type-imports': 'off',
 				'@typescript-eslint/no-unsafe-call': 'off',
 				'@typescript-eslint/no-unsafe-assignment': 'off',
