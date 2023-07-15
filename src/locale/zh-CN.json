@@ -1,0 +1,13 @@
+{
+	"translation": {
+		"configNotFound": "未在当前笔记发现滴答清单相关配置",
+		"beginSync": "开始同步",
+		"userName": "用户名",
+		"password": "密码",
+		"inputUserName": "请输入您的用户名",
+		"inputPassword": "请输入您的密码",
+		"debugMode": "调试模式",
+		"syncSuccess": "同步成功",
+		"syncToDoList": "同步待办"
+	}
+}

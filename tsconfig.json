@@ -5,6 +5,7 @@
     "inlineSources": true,
     "module": "CommonJS",
     "target": "ESNext",
+    "resolveJsonModule":true,
     "allowJs": true,
     "esModuleInterop":true,
     "noImplicitAny": true,

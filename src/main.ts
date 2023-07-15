@@ -12,6 +12,8 @@ import debug from 'debug';
 import {DidaFrontMatter, ServeType} from './types';
 import {taskToMarkdown} from './utils';
 import fm from 'front-matter';
+import {t} from 'i18next';
+import './locale';
 
 type DiDaSyncPluginSettings = {
   didaPassword: string;
@@ -42,13 +44,13 @@ export default class DiDaSyncPlugin extends Plugin {
 
     this.registerCommends();
     this.addSettingTab(new DidaSettingTab(this.app, this));
-    this.log('init done');
+    this.log('init done 666');
   }
 
   registerCommends() {
     this.addCommand({
       id: 'sync-current-file',
-      name: '同步当前笔记',
+      name: t('syncToDoList'),
       editorCheckCallback: (checking, editor, ctx) => {
         const frontmatter = fm(editor.getValue()).attributes as any;
         let didaConfig = (frontmatter?.dida || frontmatter?.ticktick) as DidaFrontMatter;
@@ -62,7 +64,7 @@ export default class DiDaSyncPlugin extends Plugin {
         }
 
         if (!checking && !didaConfig) {
-          new Notice('未在当前笔记发现滴答清单相关配置');
+          new Notice(t('configNotFound'));
           return;
         }
 
@@ -83,7 +85,7 @@ export default class DiDaSyncPlugin extends Plugin {
           : [didaConfig.tags].filter((v: any): v is string =>
             Boolean(v));
         const {startDate} = didaConfig;
-        new Notice('开始同步');
+        new Notice(t('beginSync'));
         void this.didaClient
           .getItems({
             startDate,
@@ -112,7 +114,7 @@ export default class DiDaSyncPlugin extends Plugin {
                 ch: 0,
               },
             );
-            new Notice('同步成功');
+            new Notice(t('syncSuccess'));
           });
 
         return true;
@@ -149,27 +151,34 @@ class DidaSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    new Setting(containerEl).setName('用户名').addText(text =>
+    new Setting(containerEl).setName(t('userName')).addText(text => {
       text
-        .setPlaceholder('请输入你的用户名')
+        .setPlaceholder(t('inputUserName'))
         .setValue(this.plugin.settings.didaUserName)
         .onChange(async value => {
           this.plugin.settings.didaUserName = value;
           await this.plugin.saveSettings();
-        }),
+        }).inputEl.setCssStyles({
+          width: '300px',
+        });
+    },
     );
 
     let inputEl: TextComponent;
-    const el = new Setting(containerEl).setName('密码').addText(text => {
-      text
-        .setPlaceholder('请输入你的密码')
+    const el = new Setting(containerEl).setName(t('password')).addText(text => {
+      const psw = text
+        .setPlaceholder(t('inputPassword'))
         .setValue(this.plugin.settings.didaPassword)
         .onChange(async value => {
           this.plugin.settings.didaPassword = value;
           await this.plugin.saveSettings();
         }).then(i => {
           inputEl = i;
-        }).inputEl.setAttribute('type', 'password');
+        });
+      psw.inputEl.setAttribute('type', 'password');
+      psw.inputEl.setCssStyles({
+        width: '250px',
+      });
     });
     el.addToggle(v =>
       v.onChange(value => {
@@ -181,7 +190,7 @@ class DidaSettingTab extends PluginSettingTab {
       }),
     );
 
-    new Setting(containerEl).setName('调试模式').addToggle(toggle =>
+    new Setting(containerEl).setName(t('debugMode')).addToggle(toggle =>
       toggle
         .setValue(this.plugin.settings.debug)
         .onChange(async value => {
