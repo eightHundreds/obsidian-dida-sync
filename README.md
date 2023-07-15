@@ -1,6 +1,6 @@
 # 滴答清单同步
 
-建议使用[obsidian42-brat](https://github.com/TfTHacker/obsidian42-brat)安装
+[English](./README.EN.md)
 
 ## 快速手上
 
@@ -11,9 +11,8 @@
 ---
 dida: true
 ---
-
 ```
-2. 执行命令`Dida Todo Sync: 同步当前笔记`
+2. 执行命令`Dida Todo Sync: 同步待办`
 **默认行为**
 
 - 默认同步半年内的所有待办(无论是否完成)
