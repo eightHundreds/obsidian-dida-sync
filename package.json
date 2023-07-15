@@ -30,6 +30,7 @@
 		"@types/debug": "^4.1.7",
 		"dayjs": "^1.11.7",
 		"debug": "^4.3.4",
+		"front-matter": "^4.0.2",
 		"remark": "^14.0.2"
 	}
 }

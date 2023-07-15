@@ -11,6 +11,7 @@ import {DiDa365API, TodoAppClientFacade} from './dida';
 import debug from 'debug';
 import {DidaFrontMatter, ServeType} from './types';
 import {taskToMarkdown} from './utils';
+import fm from 'front-matter';
 
 type DiDaSyncPluginSettings = {
   didaPassword: string;
@@ -49,9 +50,7 @@ export default class DiDaSyncPlugin extends Plugin {
       id: 'sync-current-file',
       name: '同步当前笔记',
       editorCheckCallback: (checking, editor, ctx) => {
-        const {file} = ctx as MarkdownView;
-        const fileCache = this.app.metadataCache.getFileCache(file);
-        const frontmatter = fileCache?.frontmatter;
+        const frontmatter = fm(editor.getValue()).attributes as any;
         let didaConfig = (frontmatter?.dida || frontmatter?.ticktick) as DidaFrontMatter;
 
         if (checking) {
@@ -84,6 +83,7 @@ export default class DiDaSyncPlugin extends Plugin {
           : [didaConfig.tags].filter((v: any): v is string =>
             Boolean(v));
         const {startDate} = didaConfig;
+        new Notice('开始同步');
         void this.didaClient
           .getItems({
             startDate,

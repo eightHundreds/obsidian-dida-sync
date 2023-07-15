@@ -4,29 +4,29 @@ import {remark} from 'remark';
 import {Item} from './dida';
 
 export function addHeadingLevel(markdown: string) {
-	const res = remark()
-		.use(() => tree => {
-			tree.children.forEach(node => {
-				if (node.type === 'heading') {
-					node.depth += 1;
-				}
-			});
-		})
-		.processSync(markdown)
-		.toString();
-	return res;
+  const res = remark()
+    .use(() => tree => {
+      tree.children.forEach(node => {
+        if (node.type === 'heading') {
+          node.depth += 1;
+        }
+      });
+    })
+    .processSync(markdown)
+    .toString();
+  return res;
 }
 
 export function taskToMarkdown(items: Item[]) {
-	const format = (v: string) => {
-		if (!v) {
-			return '';
-		}
+  const format = (v: string) => {
+    if (!v) {
+      return '';
+    }
 
-		return dayjs(v).format('YYYY-MM-DD HH:mm:ss');
-	};
+    return dayjs(v).format('YYYY-MM-DD HH:mm:ss');
+  };
 
-	return items.map(item => `# ${item.title}
+  return items.map(item => `# ${item.title}
 ^dida-${item.id}
 
 > [!meta]-
