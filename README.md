@@ -23,20 +23,29 @@ dida: true
 配置在笔记头部的front-matter
 
 - dida: 这篇笔记是否开启滴答清单同步
-- projectId: 项目id, 过滤出指定清单下的内容, projectId需要到滴答清单web版获取
-![](./docs/dida.jpg)
-- tags: 过滤出包含指定标签内容, 数组类型
-- startDate: 同步从哪天开始到现在的内容. 默认是半年前
+    - projectId: 项目id, 过滤出指定清单下的内容, projectId需要到滴答清单web版获取
+    ![](./docs/dida.jpg)
+    - tags: 过滤出包含指定标签内容, 数组类型
+    - startDate: 同步从哪天开始到现在的内容. 默认是半年前
 
 
-eg:
+## 举例
+
+**默认配置**
+
 ```
 dida: true
-projectId: xxx
-tags: 
-    - 标签1
-    - 标签2
-startDate: 2023-01-01
+```
+
+**配置projectId和tags**
+
+```
+dida: 
+    projectId: xxx
+    tags: 
+        - 标签1
+        - 标签2
+    startDate: 2023-01-01
 ```
 
 # TODO  
