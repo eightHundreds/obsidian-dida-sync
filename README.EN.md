@@ -35,7 +35,7 @@ Configuration in the front matter of the note
 
 ## Example
 
-**Default configuration**
+**Simple configuration**
 
 ```
 ticktick: true
