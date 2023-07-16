@@ -29,6 +29,8 @@ Configuration in the front matter of the note
   ![](./docs/ticktick.jpg)
   - tags: Filter out content containing specified tags, array type
   - startDate: Synchronize content from which day to now. The default is six months ago.
+  - taskId: task id sync specified task
+    ![](./docs/task-ticktick.jpg)
 
 
 ## Example
@@ -44,9 +46,10 @@ ticktick: true
 
 ```
 dida: 
-    projectId: xxx
-    tags: 
-        - myTag1
-        - myTag2
-    startDate: 2023-01-01
+  projectId: xxx
+  tags: 
+    - myTag1
+    - myTag2
+  startDate: 2023-01-01
 ```
+(Note that the indentation is 2 spaces)

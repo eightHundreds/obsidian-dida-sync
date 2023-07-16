@@ -8,6 +8,10 @@ export type DidaFrontMatter = {
 	 */
   tags?: string[] | string;
   /**
+   * 任务
+   */
+  taskId?: string;
+  /**
 	 * 项目Id
 	 */
   projectId?: string;

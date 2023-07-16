@@ -1,17 +1,17 @@
 import {
   App,
-  MarkdownView,
   Notice,
   Plugin,
   PluginSettingTab,
   Setting,
   TextComponent,
 } from 'obsidian';
-import {DiDa365API, TodoAppClientFacade} from './dida';
+import {TodoAppClientFacade} from './dida';
+// @ts-expect-error
+import * as yamlFront from 'yaml-front-matter';
 import debug from 'debug';
 import {DidaFrontMatter, ServeType} from './types';
 import {taskToMarkdown} from './utils';
-import fm from 'front-matter';
 import {t} from 'i18next';
 import './locale';
 
@@ -52,9 +52,8 @@ export default class DiDaSyncPlugin extends Plugin {
       id: 'sync-current-file',
       name: t('syncToDoList'),
       editorCheckCallback: (checking, editor, ctx) => {
-        const frontmatter = fm(editor.getValue()).attributes as any;
+        const frontmatter = yamlFront.loadFront(editor.getValue()) as any;
         let didaConfig = (frontmatter?.dida || frontmatter?.ticktick) as DidaFrontMatter;
-
         if (checking) {
           if (!didaConfig) {
             return false;
@@ -92,6 +91,7 @@ export default class DiDaSyncPlugin extends Plugin {
             tags,
             projectId: didaConfig.projectId,
             type: didaConfig.type,
+            taskId: didaConfig.taskId,
           })
           .then(tasks => {
             const mdText = taskToMarkdown(tasks);

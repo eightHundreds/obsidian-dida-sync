@@ -116,6 +116,14 @@ export class DiDa365API implements IDiDa365API {
       return true;
     };
 
+    const filterTaskId = (item: Item) => {
+      if (!filterOptions?.taskId) {
+        return true;
+      }
+
+      return item.id === filterOptions.taskId;
+    };
+
     this.log('uncompleted', uncompleted);
     this.log('completed', completed);
     let allTask = [...uncompleted, ...completed];
@@ -126,13 +134,11 @@ export class DiDa365API implements IDiDa365API {
     this.log('allTask(after filterProjectId)', allTask);
 
     allTask = allTask
-      .filter(filterTags)
-      .sort(
-        (a, b) =>
-          dayjs(b.createdTime).valueOf()
-					- dayjs(a.createdTime).valueOf(),
-      );
+      .filter(filterTags);
     this.log('allTask(after filterTags)', allTask);
+
+    allTask = allTask.filter(filterTaskId);
+    this.log('allTask(after filterTaskId)', allTask);
 
     allTask = allTask.sort(
       (a, b) =>

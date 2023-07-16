@@ -26,6 +26,8 @@ dida: true
     ![](./docs/dida.jpg)
     - tags: 过滤出包含指定标签内容, 数组类型
     - startDate: 同步从哪天开始到现在的内容. 默认是半年前
+    - taskId: 任务id,同步指定任务
+    ![](./docs/task-dida.jpg)
 
 
 ## 举例
@@ -40,12 +42,13 @@ dida: true
 
 ```
 dida: 
-    projectId: xxx
-    tags: 
-        - 标签1
-        - 标签2
-    startDate: 2023-01-01
+  projectId: xxx
+  tags: 
+    - 标签1
+    - 标签2
+  startDate: 2023-01-01
 ```
+(注意缩进是2个空格)
 
 # TODO  
 
