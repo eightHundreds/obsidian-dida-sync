@@ -53,4 +53,4 @@ dida:
 # TODO  
 
 - [x] star过10个补充文档
-- [ ] star过20支持ticktick, 上架obsidian
+- [x] star过20支持ticktick, 上架obsidian
