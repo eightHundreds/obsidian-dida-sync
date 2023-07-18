@@ -4,7 +4,7 @@
 	"version": "1.4.0",
 	"minAppVersion": "0.15.0",
 	"description": "Sync 滴答清单(ticktick) to obsidian",
-	"author": "Obsidian",
+	"author": "eightHundreds",
 	"fundingUrl": "https://www.bilibili.com/video/BV1GJ411x7h7",
 	"isDesktopOnly": false
 }
