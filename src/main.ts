@@ -1,5 +1,6 @@
 import {
   App,
+  ItemView,
   Notice,
   Plugin,
   PluginSettingTab,
@@ -10,16 +11,12 @@ import {TodoAppClientFacade} from './dida';
 // @ts-expect-error
 import * as yamlFront from 'yaml-front-matter';
 import debug from 'debug';
-import {DidaFrontMatter, ServeType} from './types';
+import {DiDaSyncPluginSettings, DidaFrontMatter, ServeType} from './types';
 import {taskToMarkdown} from './utils';
 import {t} from 'i18next';
+import DidaSettingTab from './settings';
 import './locale';
-
-type DiDaSyncPluginSettings = {
-  didaPassword: string;
-  didaUserName: string;
-  debug: boolean;
-};
+import {settingAtom, settingAtomFamily, store} from './store';
 
 const defaultSettings: DiDaSyncPluginSettings = {
   didaPassword: '',
@@ -28,7 +25,6 @@ const defaultSettings: DiDaSyncPluginSettings = {
 };
 
 export default class DiDaSyncPlugin extends Plugin {
-  settings: DiDaSyncPluginSettings;
   didaClient: TodoAppClientFacade;
   log: (...args: any[]) => any;
   async onload() {
@@ -38,16 +34,31 @@ export default class DiDaSyncPlugin extends Plugin {
       password: this.settings.didaPassword,
     });
     this.log = debug('dida365:plugin');
+
     if (this.settings.debug) {
       debug.enable('dida365:*');
     }
 
     this.registerCommends();
+    this.registerPageHeaderAction();
+    this.registerSettingChange();
     this.addSettingTab(new DidaSettingTab(this.app, this));
-    this.log('init done 666');
   }
 
-  registerCommends() {
+  public get settings() {
+    return store.get(settingAtom);
+  }
+
+  public updateSetting<T extends keyof DiDaSyncPluginSettings>(key: T, val: DiDaSyncPluginSettings[T]) {
+    store.set(settingAtomFamily(key), val);
+    void this.saveSettings();
+  }
+
+  public async saveSettings() {
+    await this.saveData(this.settings);
+  }
+
+  private registerCommends() {
     this.addCommand({
       id: 'sync-current-file',
       name: t('syncToDoList'),
@@ -122,81 +133,54 @@ export default class DiDaSyncPlugin extends Plugin {
     });
   }
 
-  async loadSettings() {
-    this.settings = {
-      ...defaultSettings,
-      ...(await this.loadData()),
-    };
-  }
-
-  async saveSettings() {
-    await this.saveData(this.settings);
-    this.didaClient = new TodoAppClientFacade({
-      username: this.settings.didaUserName,
-      password: this.settings.didaPassword,
-    });
-  }
-}
-
-class DidaSettingTab extends PluginSettingTab {
-  plugin: DiDaSyncPlugin;
-
-  constructor(app: App, plugin: DiDaSyncPlugin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-
-  display(): void {
-    const {containerEl} = this;
-
-    containerEl.empty();
-
-    new Setting(containerEl).setName(t('userName')).addText(text => {
-      text
-        .setPlaceholder(t('inputUserName'))
-        .setValue(this.plugin.settings.didaUserName)
-        .onChange(async value => {
-          this.plugin.settings.didaUserName = value;
-          await this.plugin.saveSettings();
-        }).inputEl.setCssStyles({
-          width: '300px',
-        });
-    },
-    );
-
-    let inputEl: TextComponent;
-    const el = new Setting(containerEl).setName(t('password')).addText(text => {
-      const psw = text
-        .setPlaceholder(t('inputPassword'))
-        .setValue(this.plugin.settings.didaPassword)
-        .onChange(async value => {
-          this.plugin.settings.didaPassword = value;
-          await this.plugin.saveSettings();
-        }).then(i => {
-          inputEl = i;
-        });
-      psw.inputEl.setAttribute('type', 'password');
-      psw.inputEl.setCssStyles({
-        width: '250px',
+  private registerPageHeaderAction() {
+    // This.plugin.register(() => {
+    //   // Remove all buttons on plugin unload
+    //   this.removeButtonsFromAllLeaves();
+    // });
+    // this.plugin.registerEvent(
+    //   app.workspace.on('layout-change', () => {
+    //     this.addButtonsToAllLeaves();
+    //   }),
+    // );
+    // app.workspace.onLayoutReady(() =>
+    //   setTimeout(() => this.addButtonsToAllLeaves(), 100),
+    // );
+    this.app.workspace.onLayoutReady(() => {
+      this.app.workspace.iterateAllLeaves(leaf => {
+        // (leaf.view as ItemView).addAction()
       });
     });
-    el.addToggle(v =>
-      v.onChange(value => {
-        if (value) {
-          inputEl.inputEl.setAttribute('type', 'text');
-        } else {
-          inputEl.inputEl.setAttribute('type', 'password');
-        }
-      }),
-    );
+  }
 
-    new Setting(containerEl).setName(t('debugMode')).addToggle(toggle =>
-      toggle
-        .setValue(this.plugin.settings.debug)
-        .onChange(async value => {
-          this.plugin.settings.debug = value;
-          await this.plugin.saveSettings();
-        }),
-    );
+  private registerSettingChange() {
+    this.register(store.sub(settingAtomFamily('didaUserName'), () => {
+      this.didaClient = new TodoAppClientFacade({
+        username: this.settings.didaUserName,
+        password: this.settings.didaPassword,
+      });
+    }));
+
+    this.register(store.sub(settingAtomFamily('didaPassword'), () => {
+      this.didaClient = new TodoAppClientFacade({
+        username: this.settings.didaUserName,
+        password: this.settings.didaPassword,
+      });
+    }));
+
+    this.register(store.sub(settingAtomFamily('debug'), () => {
+      if (this.settings.debug) {
+        debug.enable('dida365:*');
+      } else {
+        debug.disable();
+      }
+    }));
+  }
+
+  private async loadSettings() {
+    store.set(settingAtom, {
+      ...defaultSettings,
+      ...(await this.loadData()),
+    });
   }
 }

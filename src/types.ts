@@ -2,6 +2,13 @@ export enum ServeType {
   Dida = 'dida',
   TickTick = 'ticktick',
 }
+
+export type DiDaSyncPluginSettings = {
+  didaPassword: string;
+  didaUserName: string;
+  debug: boolean;
+};
+
 export type DidaFrontMatter = {
   /**
 	 * 标签
@@ -24,3 +31,5 @@ export type DidaFrontMatter = {
 	 */
   type: ServeType;
 };
+
+export type ValueOf<T> = T[keyof T];
