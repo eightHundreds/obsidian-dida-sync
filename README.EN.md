@@ -45,7 +45,7 @@ ticktick: true
 **Configure projectId and tags**
 
 ```
-dida: 
+ticktick: 
   projectId: xxx
   tags: 
     - myTag1

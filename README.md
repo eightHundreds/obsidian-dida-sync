@@ -53,4 +53,4 @@ dida:
 # TODO  
 
 - [x] star过10个补充文档
-- [ ] star过20支持ticktick, 上架obsidian
+- [x] star过20支持ticktick, 上架obsidian([进行中](https://github.com/obsidianmd/obsidian-releases/pull/2193))

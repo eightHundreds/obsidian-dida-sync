@@ -5,5 +5,6 @@
 	"minAppVersion": "0.15.0",
 	"description": "Sync 滴答清单(ticktick) to obsidian",
 	"author": "eightHundreds",
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+	"authorUrl": "https://github.com/eightHundreds"
 }
