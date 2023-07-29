@@ -1,13 +1,14 @@
 {
   "translation":{
     "configNotFound":"No TickTick related configuration found in the current note.",
-    "beginSync":"begin Sync",
+    "beginSync":"begin Sync TickTick",
     "userName":"userName",
     "password":"password",
     "inputUserName":"Please input your username",
     "inputPassword":"Please input your password",
     "debugMode":"Debug Mode",
     "syncSuccess":"Sync Success",
-    "syncToDoList":"Sync ToDo List"
+    "syncToDoList":"Sync ToDo List",
+    "disablePageHeaderAction": "Disable Page Header Action"
   }
 }

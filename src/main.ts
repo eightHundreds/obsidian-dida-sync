@@ -1,6 +1,7 @@
 import {
   App,
   ItemView,
+  MarkdownView,
   Notice,
   Plugin,
   PluginSettingTab,
@@ -17,6 +18,7 @@ import {t} from 'i18next';
 import DidaSettingTab from './settings';
 import './locale';
 import {settingAtom, settingAtomFamily, store} from './store';
+import {PLUGIN_ID} from './constants';
 
 const defaultSettings: DiDaSyncPluginSettings = {
   didaPassword: '',
@@ -49,7 +51,10 @@ export default class DiDaSyncPlugin extends Plugin {
     return store.get(settingAtom);
   }
 
-  public updateSetting<T extends keyof DiDaSyncPluginSettings>(key: T, val: DiDaSyncPluginSettings[T]) {
+  public updateSetting<T extends keyof DiDaSyncPluginSettings>(
+    key: T,
+    val: DiDaSyncPluginSettings[T],
+  ) {
     store.set(settingAtomFamily(key), val);
     void this.saveSettings();
   }
@@ -63,8 +68,11 @@ export default class DiDaSyncPlugin extends Plugin {
       id: 'sync-current-file',
       name: t('syncToDoList'),
       editorCheckCallback: (checking, editor, ctx) => {
-        const frontmatter = yamlFront.loadFront(editor.getValue()) as any;
-        let didaConfig = (frontmatter?.dida || frontmatter?.ticktick) as DidaFrontMatter;
+        const frontmatter = yamlFront.loadFront(
+          editor.getValue(),
+        ) as any;
+        let didaConfig = (frontmatter?.dida
+					|| frontmatter?.ticktick) as DidaFrontMatter;
         if (checking) {
           if (!didaConfig) {
             return false;
@@ -93,7 +101,8 @@ export default class DiDaSyncPlugin extends Plugin {
         const tags = Array.isArray(didaConfig.tags)
           ? didaConfig.tags
           : [didaConfig.tags].filter((v: any): v is string =>
-            Boolean(v));
+            Boolean(v),
+					  );
         const {startDate} = didaConfig;
         new Notice(t('beginSync'));
         void this.didaClient
@@ -134,47 +143,86 @@ export default class DiDaSyncPlugin extends Plugin {
   }
 
   private registerPageHeaderAction() {
-    // This.plugin.register(() => {
-    //   // Remove all buttons on plugin unload
-    //   this.removeButtonsFromAllLeaves();
-    // });
-    // this.plugin.registerEvent(
-    //   app.workspace.on('layout-change', () => {
-    //     this.addButtonsToAllLeaves();
-    //   }),
-    // );
-    // app.workspace.onLayoutReady(() =>
-    //   setTimeout(() => this.addButtonsToAllLeaves(), 100),
-    // );
-    this.app.workspace.onLayoutReady(() => {
+    this.app.workspace.on('layout-change', () => {
       this.app.workspace.iterateAllLeaves(leaf => {
-        // (leaf.view as ItemView).addAction()
+        const {view} = leaf;
+        if (!(view instanceof MarkdownView)) {
+          return;
+        }
+
+        const syncBtn = view.actionsEl.querySelector(
+          `a[aria-label="${t('beginSync')}"]`,
+        );
+
+        if (this.settings.disablePageHeaderAction) {
+          if (syncBtn) {
+            syncBtn.remove();
+          }
+
+          return;
+        }
+
+        const frontmatter = yamlFront.loadFront(
+          view.editor.getValue(),
+        ) as any;
+        const hasDidaFlag = frontmatter?.dida || frontmatter?.ticktick;
+
+        if (hasDidaFlag && !syncBtn) {
+          view.addAction('check-circle', t('beginSync'), async () => {
+            this.app.commands.executeCommandById(
+              `${PLUGIN_ID}:sync-current-file`,
+            );
+          });
+        } else if (!hasDidaFlag && syncBtn) {
+          syncBtn.remove();
+        }
+      });
+    });
+
+    // 销毁时把action的按钮移除
+    this.register(() => {
+      this.app.workspace.iterateAllLeaves(leaf => {
+        const {view} = leaf;
+        if (!(view instanceof MarkdownView)) {
+          return;
+        }
+
+        const syncBtn = view.actionsEl.querySelector(
+          `a[aria-label="${t('beginSync')}"]`,
+        );
+        syncBtn?.remove();
       });
     });
   }
 
   private registerSettingChange() {
-    this.register(store.sub(settingAtomFamily('didaUserName'), () => {
-      this.didaClient = new TodoAppClientFacade({
-        username: this.settings.didaUserName,
-        password: this.settings.didaPassword,
-      });
-    }));
+    this.register(
+      store.sub(settingAtomFamily('didaUserName'), () => {
+        this.didaClient = new TodoAppClientFacade({
+          username: this.settings.didaUserName,
+          password: this.settings.didaPassword,
+        });
+      }),
+    );
 
-    this.register(store.sub(settingAtomFamily('didaPassword'), () => {
-      this.didaClient = new TodoAppClientFacade({
-        username: this.settings.didaUserName,
-        password: this.settings.didaPassword,
-      });
-    }));
+    this.register(
+      store.sub(settingAtomFamily('didaPassword'), () => {
+        this.didaClient = new TodoAppClientFacade({
+          username: this.settings.didaUserName,
+          password: this.settings.didaPassword,
+        });
+      }),
+    );
 
-    this.register(store.sub(settingAtomFamily('debug'), () => {
-      if (this.settings.debug) {
-        debug.enable('dida365:*');
-      } else {
-        debug.disable();
-      }
-    }));
+    this.register(
+      store.sub(settingAtomFamily('debug'), () => {
+        if (this.settings.debug) {
+          debug.enable('dida365:*');
+        } else {
+          debug.disable();
+        }
+      }),
+    );
   }
 
   private async loadSettings() {

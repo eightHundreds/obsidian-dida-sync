@@ -3,3 +3,5 @@ export enum TaskStatus {
   Abandoned = -1,
   Completed = 2,
 }
+
+export const PLUGIN_ID = 'dida-sync';

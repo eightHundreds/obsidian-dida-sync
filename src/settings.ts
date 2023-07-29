@@ -53,6 +53,14 @@ class DidaSettingTab extends PluginSettingTab {
       }),
     );
 
+    new Setting(containerEl).setName(t('disablePageHeaderAction')).addToggle(toggle =>
+      toggle
+        .setValue(this.plugin.settings.disablePageHeaderAction)
+        .onChange(async value => {
+          this.plugin.updateSetting('disablePageHeaderAction', value);
+        }),
+    );
+
     new Setting(containerEl).setName(t('debugMode')).addToggle(toggle =>
       toggle
         .setValue(this.plugin.settings.debug)

@@ -6,6 +6,7 @@ export enum ServeType {
 export type DiDaSyncPluginSettings = {
   didaPassword: string;
   didaUserName: string;
+  disablePageHeaderAction: boolean;
   debug: boolean;
 };
 
@@ -33,3 +34,32 @@ export type DidaFrontMatter = {
 };
 
 export type ValueOf<T> = T[keyof T];
+
+declare module 'obsidian' {
+
+  interface App {
+    commands: {
+      commands: Record<string, Command>;
+      executeCommandById: (id: string) => void;
+    };
+    plugins: {
+      manifests: Record<string, PluginManifest>;
+    };
+    statusBar: {
+      containerEl: HTMLElement;
+    };
+    appId: string;
+    isMobile: boolean;
+    setting: {
+      closeActiveTab: () => void;
+      openTabById: (id: string) => void;
+      activeTab: {
+        containerEl: HTMLElement;
+      };
+    };
+  }
+
+  interface ItemView {
+    actionsEl: HTMLDivElement;
+  }
+}
