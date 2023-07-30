@@ -8,6 +8,7 @@
 		"inputPassword": "请输入您的密码",
 		"debugMode": "调试模式",
 		"syncSuccess": "同步成功",
+		"syncFailed": "同步失败",
 		"syncToDoList": "同步待办",
 		"disablePageHeaderAction": "隐藏页面头部快捷操作"
 	}

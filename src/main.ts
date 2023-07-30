@@ -1,29 +1,28 @@
 import {
-  App,
-  ItemView,
   MarkdownView,
   Notice,
   Plugin,
-  PluginSettingTab,
-  Setting,
-  TextComponent,
 } from 'obsidian';
-import {TodoAppClientFacade} from './dida';
+import '@total-typescript/ts-reset';
+import path from 'path';
+import {TodoAppClientFacade} from './core/dida';
 // @ts-expect-error
 import * as yamlFront from 'yaml-front-matter';
 import debug from 'debug';
 import {DiDaSyncPluginSettings, DidaFrontMatter, ServeType} from './types';
-import {taskToMarkdown} from './utils';
+import {isFulfilled} from './utils';
 import {t} from 'i18next';
 import DidaSettingTab from './settings';
-import './locale';
 import {settingAtom, settingAtomFamily, store} from './store';
 import {PLUGIN_ID} from './constants';
+import MarkdownGenerator from './core/markdownGenerator';
+import './locale';
 
 const defaultSettings: DiDaSyncPluginSettings = {
   didaPassword: '',
   didaUserName: '',
   debug: false,
+  disablePageHeaderAction: false,
 };
 
 export default class DiDaSyncPlugin extends Plugin {
@@ -102,7 +101,7 @@ export default class DiDaSyncPlugin extends Plugin {
           ? didaConfig.tags
           : [didaConfig.tags].filter((v: any): v is string =>
             Boolean(v),
-					  );
+          );
         const {startDate} = didaConfig;
         new Notice(t('beginSync'));
         void this.didaClient
@@ -113,8 +112,31 @@ export default class DiDaSyncPlugin extends Plugin {
             type: didaConfig.type,
             taskId: didaConfig.taskId,
           })
-          .then(tasks => {
-            const mdText = taskToMarkdown(tasks);
+          .then(async tasks => {
+            const generator = new MarkdownGenerator(this);
+            const mdSegments = await Promise.allSettled(tasks.map(async item => {
+              const downloadResult = await this.didaClient.downloadAttachment(item, didaConfig.type);
+              const files = downloadResult.filter(isFulfilled).map(res => res.value);
+
+              // 下载附件
+              const savedFiles = await Promise.allSettled(files.map(async file => {
+                const fileExist = this.app.vault.getFiles().find(_file => _file.path.includes(file.id));
+                if (fileExist) {
+                  return fileExist;
+                }
+
+                const obFile = await this.app.vault.createBinary(
+                  // @ts-expect-error
+                  await this.app.vault.getAvailablePathForAttachments(`${file.id}`, path.extname(file.path).replace('.', ''), ctx.file) as string,
+                  file.arrayBuffer,
+                );
+                return obFile;
+              }));
+
+              return generator.taskToMarkdown(item, savedFiles.filter(isFulfilled).map(a => a.value));
+            }));
+            const mdText = mdSegments.filter(isFulfilled).map(v => v.value).join('\n');
+
             const currentText = editor.getValue();
             // 获得frontmatter的位置
             const startOfFrontmatter = currentText.indexOf('---');
@@ -135,6 +157,9 @@ export default class DiDaSyncPlugin extends Plugin {
               },
             );
             new Notice(t('syncSuccess'));
+          }).catch(err => {
+            new Notice(`${t('syncFailed')} ${err.message}`);
+            this.log(err);
           });
 
         return true;

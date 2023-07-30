@@ -8,6 +8,7 @@
     "inputPassword":"Please input your password",
     "debugMode":"Debug Mode",
     "syncSuccess":"Sync Success",
+    "syncFailed": "Sync Failed",
     "syncToDoList":"Sync ToDo List",
     "disablePageHeaderAction": "Disable Page Header Action"
   }

@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import dayjs from 'dayjs';
-import {requestUrl} from 'obsidian';
+import path from 'path';
+import {Tasks, requestUrl} from 'obsidian';
 import qs from 'querystring';
-import {DidaFrontMatter, ServeType} from './types';
-import {TaskStatus} from './constants';
+import {DidaFrontMatter, ServeType} from '../types';
+import {TaskStatus} from '../constants';
 import debug from 'debug';
 
 type DiDa365APIOptions = {
   username: string;
   password: string;
+  apiHost?: string;
   host?: string;
-  loginHost?: string;
 };
 
 export type Item = {
@@ -32,7 +33,14 @@ export type Item = {
   status: number;
   items: any[];
   progress: number;
-  attachments: any[];
+  attachments: Array<{
+    createdTime: string;
+    fileName: string;
+    fileType: string;
+    id: string;
+    path: string;
+    size: number;
+  }>;
   dueDate?: string;
   modifiedTime: string;
   etag: string;
@@ -57,7 +65,8 @@ export class DiDa365API implements IDiDa365API {
   private readonly log: (...args: any[]) => any;
   constructor(options: DiDa365APIOptions) {
     this.options = {
-      host: 'https://api.dida365.com',
+      apiHost: 'https://api.dida365.com',
+      host: 'https://dida365.com',
       ...options,
     };
     this.log = debug('dida365:api');
@@ -149,8 +158,25 @@ export class DiDa365API implements IDiDa365API {
     return allTask;
   }
 
+  public async downloadAttachment(item: Item) {
+    const result = item.attachments.map(async attachment => {
+      const url = `${this.options.apiHost}/api/v1/attachment/${item.projectId}/${item.id}/${attachment.id}${path.extname(attachment.path)}`;
+      return requestUrl({
+        url,
+        headers: {
+          Cookie: this.cookieHeader,
+        },
+        method: 'GET',
+      }).then(res => ({
+        ...attachment,
+        arrayBuffer: res.arrayBuffer,
+      }));
+    });
+    return Promise.allSettled(result);
+  }
+
   private async getAllUnCompleted() {
-    const url = `${this.options.host}/api/v2/batch/check/0`;
+    const url = `${this.options.apiHost}/api/v2/batch/check/0`;
     const result = await requestUrl({
       url,
       headers: {
@@ -163,7 +189,7 @@ export class DiDa365API implements IDiDa365API {
   }
 
   private async getAllCompleted(startData: number) {
-    const url = `${this.options.host}/api/v2/project/all/completed`;
+    const url = `${this.options.apiHost}/api/v2/project/all/completed`;
     const params = {
       from: dayjs(startData).format('YYYY-MM-DD%20HH:mm:ss'),
       to: dayjs().format('YYYY-MM-DD%20HH:mm:ss'),
@@ -200,7 +226,7 @@ export class DiDa365API implements IDiDa365API {
       return;
     }
 
-    const url = `${this.options.host}/api/v2/user/signon?wc=true&remember=true`;
+    const url = `${this.options.apiHost}/api/v2/user/signon?wc=true&remember=true`;
 
     const options = {
       username: this.options.username,
@@ -240,7 +266,8 @@ export class TodoAppClientFacade {
     });
     this.ttClient = new DiDa365API({
       ...options,
-      host: 'https://api.ticktick.com',
+      apiHost: 'https://api.ticktick.com',
+      host: 'https://ticktick.com',
     });
   }
 
@@ -250,5 +277,13 @@ export class TodoAppClientFacade {
     }
 
     return this.ttClient.getItems(filterOptions);
+  }
+
+  async downloadAttachment(item: Item, type: ServeType) {
+    if (type === ServeType.Dida) {
+      return this.didaClient.downloadAttachment(item);
+    }
+
+    return this.ttClient.downloadAttachment(item);
   }
 }

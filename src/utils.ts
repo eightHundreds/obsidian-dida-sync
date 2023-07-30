@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import {TaskStatus} from './constants';
 import {remark} from 'remark';
-import {Item} from './dida';
+import {Item} from './core/dida';
 
 export function addHeadingLevel(markdown: string) {
   const res = remark()
@@ -17,25 +17,54 @@ export function addHeadingLevel(markdown: string) {
   return res;
 }
 
-export function taskToMarkdown(items: Item[]) {
-  const format = (v: string) => {
-    if (!v) {
-      return '';
-    }
+const format = (v: string) => {
+  if (!v) {
+    return '';
+  }
 
-    return dayjs(v).format('YYYY-MM-DD HH:mm:ss');
-  };
+  return dayjs(v).format('YYYY-MM-DD HH:mm:ss');
+};
 
-  return items.map(item => `# ${item.title}
+export function tasksToMarkdown(items: Item[]) {
+  return items.map(taskToMarkdown).join('\n');
+}
+
+function taskToMarkdown(item: Item) {
+  return `# ${item.title}
 ^dida-${item.id}
 
 > [!meta]-
-> - createdTime: ${format(item.createdTime)}${item.dueDate ? `
-> - dueDate: ${format(item.dueDate)}` : ''}
+> - createdTime: ${format(item.createdTime)}${
+  item.dueDate
+    ? `
+> - dueDate: ${format(item.dueDate)}`
+    : ''
+}
 > - status: ${TaskStatus[item.status].toString()}
 
 ${addHeadingLevel(item.content)}
-${item.items.map(i => `- [${i.status === TaskStatus.Completed ? 'X' : ' '}] ${i.title}`).join('\n')}
-
-`).join('\n');
+${item.items
+    .map(
+      i => `- [${i.status === TaskStatus.Completed ? 'X' : ' '}] ${i.title}`,
+    )
+    .join('\n')}
+`;
 }
+
+export const isFulfilled = <T>(input: PromiseSettledResult<T>): input is PromiseFulfilledResult<T> =>
+  input.status === 'fulfilled';
+
+/*
+Export async function saveImageToVaultAndPaste(editor: Editor, app: App, renderer: Renderer, source: TFile, settings: ChartPluginSettings) {
+    const image = await renderer.imageRenderer(editor.getSelection(), settings.imageSettings);
+    console.log("image converted")
+    const file = await app.vault.createBinary(
+        //@ts-ignore
+        await app.vault.getAvailablePathForAttachments(`Chart ${new Date().toDateString()}`, settings.imageSettings.format.split('/').last(), source),
+        base64ToArrayBuffer(image)
+    );
+    console.log("Image saved")
+
+    editor.replaceSelection(app.fileManager.generateMarkdownLink(file, source.path));
+}
+*/

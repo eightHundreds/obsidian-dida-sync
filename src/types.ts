@@ -59,6 +59,10 @@ declare module 'obsidian' {
     };
   }
 
+  interface Vault {
+    getConfig: (key: string) => any;
+  }
+
   interface ItemView {
     actionsEl: HTMLDivElement;
   }
