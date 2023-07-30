@@ -4,7 +4,7 @@ import type DiDaSyncPlugin from '../main';
 import {Item} from './dida';
 import {TaskStatus} from '../constants';
 import {TFile} from 'obsidian';
-
+import {visit} from 'unist-util-visit';
 class MarkdownGenerator {
   constructor(private readonly plugin: DiDaSyncPlugin) {
   }
@@ -26,33 +26,26 @@ class MarkdownGenerator {
         }
       });
     }).use(() => tree => {
-      tree.children.forEach(node => {
-        if (node.type !== 'paragraph') {
+      visit(tree, 'image', node => {
+        const idInUrl = node.url.split('/')[0];
+        const attachment = attachments.find(a => a.basename === idInUrl);
+        if (!attachment) {
           return;
         }
 
-        node.children.forEach(child => {
-          if (child.type === 'image') {
-            const idInUrl = child.url.split('/')[0];
-            const attachment = attachments.find(a => a.basename === idInUrl);
-            if (!attachment) {
-              return;
-            }
+        node.url = attachment.path;
 
-            child.url = attachment.path;
-
-            if (child.alt === 'file') {
-              // @ts-expect-error
-              child.type = 'link';
-              // @ts-expect-error
-              child.children = [{
-                type: 'text',
-                value: attachment.name,
-              }];
-            }
-          }
-        });
+        if (node.alt === 'file') {
+          // @ts-expect-error
+          child.type = 'link';
+          // @ts-expect-error
+          child.children = [{
+            type: 'text',
+            value: attachment.name,
+          }];
+        }
       });
+
       return tree;
     });
 
