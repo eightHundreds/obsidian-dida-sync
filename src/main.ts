@@ -67,12 +67,15 @@ export default class DiDaSyncPlugin extends Plugin {
       id: 'sync-current-file',
       name: t('syncToDoList'),
       editorCheckCallback: (checking, editor, ctx) => {
+        this.log(`命令${checking ? '检测中' : '执行中'}`);
         const frontmatter = yamlFront.loadFront(
           editor.getValue(),
         ) as any;
         let didaConfig = (frontmatter?.dida
 					|| frontmatter?.ticktick) as DidaFrontMatter;
+
         if (checking) {
+          this.log('editor check callback', didaConfig);
           if (!didaConfig) {
             return false;
           }
