@@ -2,9 +2,10 @@ import dayjs from 'dayjs';
 import {remark} from 'remark';
 import type DiDaSyncPlugin from '../main';
 import {Item} from './dida';
-import {TaskStatus} from '../constants';
 import {TFile} from 'obsidian';
 import {visit} from 'unist-util-visit';
+import {TaskStatus} from '../types';
+
 class MarkdownGenerator {
   constructor(private readonly plugin: DiDaSyncPlugin) {
   }

@@ -3,6 +3,11 @@ export enum ServeType {
   TickTick = 'ticktick',
 }
 
+export enum TaskStatus {
+  UnCompleted = 0,
+  Abandoned = -1,
+  Completed = 2,
+}
 export type DiDaSyncPluginSettings = {
   didaPassword: string;
   didaUserName: string;
@@ -10,7 +15,7 @@ export type DiDaSyncPluginSettings = {
   debug: boolean;
 };
 
-export type DidaFrontMatter = {
+export type DidaConfig = {
   /**
 	 * 标签
 	 */
@@ -28,9 +33,17 @@ export type DidaFrontMatter = {
 	 */
   startDate?: string;
   /**
+   * 任务状态
+   */
+  status?: TaskStatus;
+  /**
 	 * 服务
 	 */
   type: ServeType;
+};
+
+export type DidaFrontMatter = Omit<DidaConfig, 'status'> & {
+  status: 'completed' | 'uncompleted';
 };
 
 export type ValueOf<T> = T[keyof T];

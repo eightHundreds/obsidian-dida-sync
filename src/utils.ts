@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import {TaskStatus} from './constants';
+import {TaskStatus} from './types';
 import {remark} from 'remark';
 import {Item} from './core/dida';
 
@@ -8,6 +8,7 @@ export function addHeadingLevel(markdown: string) {
     .use(() => tree => {
       tree.children.forEach(node => {
         if (node.type === 'heading') {
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
           node.depth += 1;
         }
       });
@@ -53,18 +54,3 @@ ${item.items
 
 export const isFulfilled = <T>(input: PromiseSettledResult<T>): input is PromiseFulfilledResult<T> =>
   input.status === 'fulfilled';
-
-/*
-Export async function saveImageToVaultAndPaste(editor: Editor, app: App, renderer: Renderer, source: TFile, settings: ChartPluginSettings) {
-    const image = await renderer.imageRenderer(editor.getSelection(), settings.imageSettings);
-    console.log("image converted")
-    const file = await app.vault.createBinary(
-        //@ts-ignore
-        await app.vault.getAvailablePathForAttachments(`Chart ${new Date().toDateString()}`, settings.imageSettings.format.split('/').last(), source),
-        base64ToArrayBuffer(image)
-    );
-    console.log("Image saved")
-
-    editor.replaceSelection(app.fileManager.generateMarkdownLink(file, source.path));
-}
-*/

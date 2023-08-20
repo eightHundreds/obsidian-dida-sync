@@ -1,15 +1,11 @@
-import {
-  MarkdownView,
-  Notice,
-  Plugin,
-} from 'obsidian';
+import {MarkdownView, Notice, Plugin} from 'obsidian';
 import '@total-typescript/ts-reset';
 import path from 'path';
 import {TodoAppClientFacade} from './core/dida';
 // @ts-expect-error
 import * as yamlFront from 'yaml-front-matter';
 import debug from 'debug';
-import {DiDaSyncPluginSettings, DidaFrontMatter, ServeType} from './types';
+import {DiDaSyncPluginSettings, DidaConfig, DidaFrontMatter, ServeType, TaskStatus} from './types';
 import {isFulfilled} from './utils';
 import {t} from 'i18next';
 import DidaSettingTab from './settings';
@@ -71,41 +67,67 @@ export default class DiDaSyncPlugin extends Plugin {
         const frontmatter = yamlFront.loadFront(
           editor.getValue(),
         ) as any;
-        let didaConfig = (frontmatter?.dida
+        const didaFrontMatter = (frontmatter?.dida
 					|| frontmatter?.ticktick) as DidaFrontMatter;
 
         if (checking) {
-          this.log('editor check callback', didaConfig);
-          if (!didaConfig) {
+          this.log('editor check callback', didaFrontMatter);
+          if (!didaFrontMatter) {
             return false;
           }
 
           return true;
         }
 
-        if (!checking && !didaConfig) {
+        if (!checking && !didaFrontMatter) {
           new Notice(t('configNotFound'));
           return;
         }
 
-        if (typeof didaConfig === 'boolean') {
-          didaConfig = {};
+        function getDidaConfigFromFrontmatter(
+          frontmatter: any,
+        ) {
+          let didaConfig = (frontmatter?.dida
+						|| frontmatter?.ticktick) as DidaFrontMatter;
+
+          if (typeof didaConfig === 'boolean') {
+            // @ts-expect-error
+            didaConfig = {};
+          }
+
+          if (frontmatter?.dida) {
+            didaConfig.type = ServeType.Dida;
+          }
+
+          if (frontmatter?.ticktick) {
+            didaConfig.type = ServeType.TickTick;
+          }
+
+          const tags = Array.isArray(didaConfig.tags)
+            ? didaConfig.tags
+            : [didaConfig.tags].filter((v: any): v is string =>
+              Boolean(v),
+            );
+          const {startDate} = didaConfig;
+          const {status} = didaConfig;
+          let finalStatus: TaskStatus | undefined;
+          if (status === 'completed') {
+            finalStatus = TaskStatus.Completed;
+          } else if (status === 'uncompleted') {
+            finalStatus = TaskStatus.UnCompleted;
+          }
+
+          return {
+            ...didaConfig,
+            tags,
+            startDate,
+            status: finalStatus,
+          } as unknown as DidaConfig;
         }
 
-        if (frontmatter?.dida) {
-          didaConfig.type = ServeType.Dida;
-        }
+        const didaConfig = getDidaConfigFromFrontmatter(frontmatter);
+        const {startDate, tags} = didaConfig;
 
-        if (frontmatter?.ticktick) {
-          didaConfig.type = ServeType.TickTick;
-        }
-
-        const tags = Array.isArray(didaConfig.tags)
-          ? didaConfig.tags
-          : [didaConfig.tags].filter((v: any): v is string =>
-            Boolean(v),
-          );
-        const {startDate} = didaConfig;
         new Notice(t('beginSync'));
         void this.didaClient
           .getItems({
@@ -114,31 +136,58 @@ export default class DiDaSyncPlugin extends Plugin {
             projectId: didaConfig.projectId,
             type: didaConfig.type,
             taskId: didaConfig.taskId,
+            status: didaConfig.status,
           })
           .then(async tasks => {
             const generator = new MarkdownGenerator(this);
-            const mdSegments = await Promise.allSettled(tasks.map(async item => {
-              const downloadResult = await this.didaClient.downloadAttachment(item, didaConfig.type);
-              const files = downloadResult.filter(isFulfilled).map(res => res.value);
+            const mdSegments = await Promise.allSettled(
+              tasks.map(async item => {
+                const downloadResult
+									= await this.didaClient.downloadAttachment(item, didaFrontMatter.type);
+                const files = downloadResult
+                  .filter(isFulfilled)
+                  .map(res => res.value);
 
-              // 下载附件
-              const savedFiles = await Promise.allSettled(files.map(async file => {
-                const fileExist = this.app.vault.getFiles().find(_file => _file.path.includes(file.id));
-                if (fileExist) {
-                  return fileExist;
-                }
+                // 下载附件
+                const savedFiles = await Promise.allSettled(
+                  files.map(async file => {
+                    const fileExist = this.app.vault
+                      .getFiles()
+                      .find(_file =>
+                        _file.path.includes(file.id),
+                      );
+                    if (fileExist) {
+                      return fileExist;
+                    }
 
-                const obFile = await this.app.vault.createBinary(
-                  // @ts-expect-error
-                  await this.app.vault.getAvailablePathForAttachments(`${file.id}`, path.extname(file.path).replace('.', ''), ctx.file) as string,
-                  file.arrayBuffer,
+                    const obFile
+											= await this.app.vault.createBinary(
+											  // @ts-expect-error
+											  (await this.app.vault.getAvailablePathForAttachments(
+											    `${file.id}`,
+											    path
+											      .extname(file.path)
+											      .replace('.', ''),
+											    ctx.file,
+											  )) as string,
+											  file.arrayBuffer,
+											);
+                    return obFile;
+                  }),
                 );
-                return obFile;
-              }));
 
-              return generator.taskToMarkdown(item, savedFiles.filter(isFulfilled).map(a => a.value));
-            }));
-            const mdText = mdSegments.filter(isFulfilled).map(v => v.value).join('\n');
+                return generator.taskToMarkdown(
+                  item,
+                  savedFiles
+                    .filter(isFulfilled)
+                    .map(a => a.value),
+                );
+              }),
+            );
+            const mdText = mdSegments
+              .filter(isFulfilled)
+              .map(v => v.value)
+              .join('\n');
 
             const currentText = editor.getValue();
             // 获得frontmatter的位置
@@ -160,7 +209,8 @@ export default class DiDaSyncPlugin extends Plugin {
               },
             );
             new Notice(t('syncSuccess'));
-          }).catch(err => {
+          })
+          .catch(err => {
             new Notice(`${t('syncFailed')} ${err.message}`);
             this.log(err);
           });

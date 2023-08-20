@@ -3,8 +3,7 @@ import dayjs from 'dayjs';
 import path from 'path';
 import {Tasks, requestUrl} from 'obsidian';
 import qs from 'querystring';
-import {DidaFrontMatter, ServeType} from '../types';
-import {TaskStatus} from '../constants';
+import {DidaConfig, DidaFrontMatter, ServeType, TaskStatus} from '../types';
 import debug from 'debug';
 
 type DiDa365APIOptions = {
@@ -55,7 +54,7 @@ export type Item = {
   tags: string[];
 };
 type IDiDa365API = {
-  getItems(filterOptions?: DidaFrontMatter): Promise<Item[]>;
+  getItems(filterOptions?: DidaConfig): Promise<Item[]>;
 };
 export class DiDa365API implements IDiDa365API {
   private cookies: string[] = [];
@@ -72,7 +71,7 @@ export class DiDa365API implements IDiDa365API {
     this.log = debug('dida365:api');
   }
 
-  public async getItems(filterOptions: DidaFrontMatter) {
+  public async getItems(filterOptions: DidaConfig) {
     this.log('getItem filterOptions', filterOptions);
     await this.checkLogin();
 
@@ -102,6 +101,7 @@ export class DiDa365API implements IDiDa365API {
 
     const noAbandoned = (item: Item) =>
       item.status !== TaskStatus.Abandoned;
+
     const filterProjectId = (item: Item) => {
       if (!filterOptions?.projectId) {
         return true;
@@ -125,6 +125,14 @@ export class DiDa365API implements IDiDa365API {
       return true;
     };
 
+    const filterStatus = (item: Item) => {
+      if (typeof filterOptions?.status !== 'number') {
+        return true;
+      }
+
+      return item.status === filterOptions.status;
+    };
+
     const filterTaskId = (item: Item) => {
       if (!filterOptions?.taskId) {
         return true;
@@ -141,6 +149,9 @@ export class DiDa365API implements IDiDa365API {
 
     allTask = allTask.filter(filterProjectId);
     this.log('allTask(after filterProjectId)', allTask);
+
+    allTask = allTask.filter(filterStatus);
+    this.log('allTask(after filterStatus)', allTask);
 
     allTask = allTask
       .filter(filterTags);
@@ -183,6 +194,7 @@ export class DiDa365API implements IDiDa365API {
         Cookie: this.cookieHeader,
       },
       method: 'GET',
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     }).then(r => r.json);
 
     return result.syncTaskBean.update as Item[];
@@ -247,7 +259,7 @@ export class DiDa365API implements IDiDa365API {
 					= (result.headers['set-cookie'] as unknown as string[]) ?? [];
         this.cookieHeader = this.cookies.join('; ') + ';';
         // 1 days
-        this.expTime = Date.now() + 1000 * 60 * 60 * 24;
+        this.expTime = Date.now() + (1000 * 60 * 60 * 24);
       })
       .catch(e => {
         console.log(e);
@@ -271,7 +283,7 @@ export class TodoAppClientFacade {
     });
   }
 
-  async getItems(filterOptions: DidaFrontMatter): Promise<Item[]> {
+  async getItems(filterOptions: DidaConfig): Promise<Item[]> {
     if (filterOptions.type === ServeType.Dida) {
       return this.didaClient.getItems(filterOptions);
     }
