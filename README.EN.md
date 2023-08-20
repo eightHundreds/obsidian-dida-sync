@@ -31,7 +31,7 @@ Configuration in the front matter of the note
   - startDate: Synchronize content from which day to now. The default is six months ago.
   - taskId: task id sync specified task
     ![](./docs/task-ticktick.jpg)
-
+  - status: task status, supports `uncompleted` and `completed`
 
 ## Example
 

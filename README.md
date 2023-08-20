@@ -28,6 +28,7 @@ dida: true
     - startDate: 同步从哪天开始到现在的内容. 默认是半年前
     - taskId: 任务id,同步指定任务
     ![](./docs/task-dida.jpg)
+    - status: 任务状态,支持 `uncompleted` 和 `completed`
 
 
 ## 举例
