@@ -1,7 +1,7 @@
 {
 	"id": "dida-sync",
 	"name": "Dida Todo Sync",
-	"version": "1.5.2",
+	"version": "1.6.0",
 	"minAppVersion": "0.15.0",
 	"description": "Sync 滴答清单(ticktick) to obsidian",
 	"author": "eightHundreds",
