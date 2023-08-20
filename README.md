@@ -1,6 +1,6 @@
 # 滴答清单同步
 
-[English](./README.EN.md)
+if you use ticktick read this!!!! -> [English](./README.EN.md)
 
 ## 快速手上
 
