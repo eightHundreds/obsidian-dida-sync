@@ -2,6 +2,7 @@
 
 Importing from TickTick to Obsidian(one way sync)
 
+> `dida`: Chinese name of ticktick
 
 [中文](./README.md)
 
@@ -15,7 +16,7 @@ Importing from TickTick to Obsidian(one way sync)
 ticktick: true
 ---
 ```
-2. Execute the command `Dida Todo Sync: Sync ToDo List`.
+2. Execute the command `Dida Todo Sync: Sync ToDo List`. 
 
 **Default Behavior**
 
