@@ -1,5 +1,8 @@
 # TickTick Sync for Obsidian
 
+Importing from TickTick to Obsidian(one way sync)
+
+
 [中文](./README.md)
 
 ## Quick Start
@@ -25,9 +28,9 @@ ticktick: true
 Configuration in the front matter of the note
 
 - ticktick: Whether to enable TickTick synchronization for this note
-  - projectId: Project ID, filter out the content under the specified list, projectId needs to be obtained from the web version of TickTick
+  - projectId: Project ID, get the content under the specified list, projectId needs to be obtained from the web version of TickTick
   ![](./docs/ticktick.jpg)
-  - tags: Filter out content containing specified tags, array type
+  - tags: get content containing specified tags, array type
   - startDate: Synchronize content from which day to now. The default is six months ago.
   - taskId: task id sync specified task
     ![](./docs/task-ticktick.jpg)
