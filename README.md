@@ -1,5 +1,8 @@
 # 滴答清单同步
 
+单向同步(滴答清单->obsidian)
+
+
 if you use ticktick read this!!!! -> [English](./README.EN.md)
 
 ## 快速手上
