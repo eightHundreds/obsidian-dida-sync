@@ -32,6 +32,7 @@ Configuration in the front matter of the note
   - projectId: Project ID, get the content under the specified list, projectId needs to be obtained from the web version of TickTick
   ![](./docs/ticktick.jpg)
   - tags: get content containing specified tags, array type
+  - excludeTags: 
   - startDate: Synchronize content from which day to now. The default is six months ago.
   - taskId: task id sync specified task
     ![](./docs/task-ticktick.jpg)
@@ -39,12 +40,36 @@ Configuration in the front matter of the note
 
 ## Example
 
+(require Obsidian 1.4.0)
+
+**Simple configuration**
+```
+ticktick: true
+```
+
+<img width="546" alt="image" src="https://github.com/eightHundreds/obsidian-dida-sync/assets/18695431/fba6522d-4676-4179-92e0-a37742e3430c">
+
+**Configure projectId and tags**
+
+```
+ticktick.projectId: xxx
+ticktick.tags:
+    - tag1
+    - tag2
+ticktick.startDate: 2023-01-01
+```
+
+<img width="557" alt="image" src="https://github.com/eightHundreds/obsidian-dida-sync/assets/18695431/a2349208-3335-4fcb-9e2c-dee9ae18f4ab">
+
+
+
+### Deprecated configuration style
+
 **Simple configuration**
 
 ```
 ticktick: true
 ```
-
 
 **Configure projectId and tags**
 
@@ -52,8 +77,8 @@ ticktick: true
 ticktick: 
   projectId: xxx
   tags: 
-    - myTag1
-    - myTag2
+    - 标签1
+    - 标签2
   startDate: 2023-01-01
 ```
 (Note that the indentation is 2 spaces)
