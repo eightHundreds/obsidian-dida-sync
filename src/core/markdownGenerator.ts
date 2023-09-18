@@ -62,10 +62,14 @@ class MarkdownGenerator {
     
 > [!meta]-
 > - createdTime: ${format(item.createdTime)}${
-			item.dueDate ? `> - dueDate: ${format(item.dueDate)}` : ""
+			item.dueDate
+				? `
+> - dueDate: ${format(item.dueDate)}`
+				: ""
 		}
 > - status: ${TaskStatus[item.status].toString()}
-    
+${item.tags?.length ? `> - tags: ${item.tags?.join(",")}` : ""}
+
 ${remarker.processSync(item.content).toString()}
 ${item.items
 	.map(

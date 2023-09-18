@@ -26,33 +26,6 @@ const format = (v: string) => {
 	return dayjs(v).format("YYYY-MM-DD HH:mm:ss");
 };
 
-export function tasksToMarkdown(items: Item[]) {
-	return items.map(taskToMarkdown).join("\n");
-}
-
-function taskToMarkdown(item: Item) {
-	return `# ${item.title}
-^dida-${item.id}
-
-> [!meta]-
-> - createdTime: ${format(item.createdTime)}${
-		item.dueDate
-			? `
-> - dueDate: ${format(item.dueDate)}`
-			: ""
-	}
-> - status: ${TaskStatus[item.status].toString()}
-
-${addHeadingLevel(item.content)}
-${item.items
-	.map(
-		(i) =>
-			`- [${i.status === TaskStatus.Completed ? "X" : " "}] ${i.title}`,
-	)
-	.join("\n")}
-`;
-}
-
 export const isFulfilled = <T>(
 	input: PromiseSettledResult<T>,
 ): input is PromiseFulfilledResult<T> => input.status === "fulfilled";

@@ -73,19 +73,18 @@ export default class DiDaSyncPlugin extends Plugin {
 				const frontmatter = yamlFront.loadFront(
 					editor.getValue(),
 				) as any;
-				const didaFrontMatter = (frontmatter?.dida ||
-					frontmatter?.ticktick) as DidaFrontMatter;
+				const hashFrontMatter = this.checkHasDidaConfig(frontmatter);
 
 				if (checking) {
-					this.log("editor check callback", didaFrontMatter);
-					if (!didaFrontMatter) {
+					this.log("editor check callback", hashFrontMatter);
+					if (!hashFrontMatter) {
 						return false;
 					}
 
 					return true;
 				}
 
-				if (!checking && !didaFrontMatter) {
+				if (!checking && !hashFrontMatter) {
 					new Notice(t("configNotFound"));
 					return;
 				}
@@ -136,7 +135,7 @@ export default class DiDaSyncPlugin extends Plugin {
 								const downloadResult =
 									await this.didaClient.downloadAttachment(
 										item,
-										didaFrontMatter.type,
+										hashFrontMatter.type,
 									);
 								const files = downloadResult
 									.filter(isFulfilled)
@@ -182,7 +181,13 @@ export default class DiDaSyncPlugin extends Plugin {
 							.filter(isFulfilled)
 							.map((v) => v.value)
 							.join("\n");
-
+						this.log(
+							`mdSegments count:${
+								mdSegments.length
+							}, success count:${
+								mdSegments.filter(isFulfilled).length
+							}`,
+						);
 						const currentText = editor.getValue();
 						// 获得frontmatter的位置
 						const startOfFrontmatter = currentText.indexOf("---");
@@ -212,6 +217,16 @@ export default class DiDaSyncPlugin extends Plugin {
 				return true;
 			},
 		});
+	}
+
+	private checkHasDidaConfig(frontmatter: any): boolean {
+		return (
+			Boolean(frontmatter?.dida) ||
+			Boolean(frontmatter?.ticktick) ||
+			Object.keys(frontmatter).some((key) => {
+				return key.startsWith("dida.") || key.startsWith("ticktick.");
+			})
+		);
 	}
 
 	private transformFrontMatter(frontmatter: Record<string, any>) {
@@ -273,7 +288,7 @@ export default class DiDaSyncPlugin extends Plugin {
 				const frontmatter = yamlFront.loadFront(
 					view.editor.getValue(),
 				) as any;
-				const hasDidaFlag = frontmatter?.dida || frontmatter?.ticktick;
+				const hasDidaFlag = this.checkHasDidaConfig(frontmatter);
 
 				if (hasDidaFlag && !syncBtn) {
 					view.addAction("check-circle", t("beginSync"), async () => {
