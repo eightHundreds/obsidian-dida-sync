@@ -7,7 +7,7 @@ if you use ticktick read this!!!! -> [English](./README.EN.md)
 
 ## 快速手上
 
-0. 在配置中输入滴答清单账号密码
+0. 在配置中输入滴答清单账号密码，确保这个账号密码能在 https://dida365.com/signin 登录
 
 1. 创建一个笔记,在笔记头部加上配置
 ```
