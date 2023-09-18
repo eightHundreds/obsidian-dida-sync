@@ -36,6 +36,31 @@ dida: true
 
 ## 举例
 
+(要求 Obsidian 1.4.0)
+
+**简单配置**
+```
+dida: true
+```
+
+<img width="546" alt="image" src="https://github.com/eightHundreds/obsidian-dida-sync/assets/18695431/fba6522d-4676-4179-92e0-a37742e3430c">
+
+**配置projectId和tags**
+
+```
+dida.projectId: xxx
+dida.tags:
+    - 标签1
+    - 标签2
+dida.startDate: 2023-01-01
+```
+
+<img width="557" alt="image" src="https://github.com/eightHundreds/obsidian-dida-sync/assets/18695431/a2349208-3335-4fcb-9e2c-dee9ae18f4ab">
+
+
+
+### 废弃的配置方式
+
 **简单配置**
 
 ```
