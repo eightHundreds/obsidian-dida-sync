@@ -28,6 +28,7 @@ dida: true
     - projectId: 项目id, 过滤出指定清单下的内容, projectId需要到滴答清单web版获取
     ![](./docs/dida.jpg)
     - tags: 过滤出包含指定标签内容, 数组类型
+    - excludeTags：需要排除的标签，当任务的标签包含了excludeTags，那么这个任务是将被排除
     - startDate: 同步从哪天开始到现在的内容. 默认是半年前
     - taskId: 任务id,同步指定任务
     ![](./docs/task-dida.jpg)
