@@ -21,6 +21,10 @@ export type DidaConfig = {
 	 */
 	tags?: string[] | string;
 	/**
+	 * 排除的标签
+	 */
+	excludeTags?: string[] | string;
+	/**
 	 * 任务
 	 */
 	taskId?: string;

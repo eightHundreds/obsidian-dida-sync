@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import dayjs from "dayjs";
 import path from "path";
 import { Tasks, requestUrl } from "obsidian";
@@ -111,7 +110,18 @@ export class DiDa365API implements IDiDa365API {
 		};
 
 		const filterTags = (item: Item) => {
-			if (filterOptions?.tags?.length) {
+			// ExcludeTag优先级更高,只要命中则把这个task去掉
+			if (filterOptions.excludeTags?.length && item.tags?.length) {
+				const _tags = Array.isArray(filterOptions.excludeTags)
+					? filterOptions.excludeTags
+					: [filterOptions.excludeTags];
+
+				if (_tags?.some((t) => item.tags.includes(t))) {
+					return false;
+				}
+			}
+
+			if (filterOptions.tags?.length) {
 				if (!item.tags?.length) {
 					return false;
 				}

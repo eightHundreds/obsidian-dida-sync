@@ -28,6 +28,7 @@ class MarkdownGenerator {
 					}
 				});
 			})
+			// @ts-expect-error
 			.use(() => (tree) => {
 				visit(tree, "image", (node) => {
 					const idInUrl = node.url.split("/")[0];

@@ -90,22 +90,8 @@ export default class DiDaSyncPlugin extends Plugin {
 					return;
 				}
 
-				function getDidaConfigFromFrontmatter(frontmatter: any) {
-					let didaConfig = (frontmatter?.dida ||
-						frontmatter?.ticktick) as DidaFrontMatter;
-
-					if (typeof didaConfig === "boolean") {
-						// @ts-expect-error
-						didaConfig = {};
-					}
-
-					if (frontmatter?.dida) {
-						didaConfig.type = ServeType.Dida;
-					}
-
-					if (frontmatter?.ticktick) {
-						didaConfig.type = ServeType.TickTick;
-					}
+				const getDidaConfigFromFrontmatter = (frontmatter: any) => {
+					const didaConfig = this.transformFrontMatter(frontmatter);
 
 					const tags = Array.isArray(didaConfig.tags)
 						? didaConfig.tags
@@ -127,7 +113,7 @@ export default class DiDaSyncPlugin extends Plugin {
 						startDate,
 						status: finalStatus,
 					} as unknown as DidaConfig;
-				}
+				};
 
 				const didaConfig = getDidaConfigFromFrontmatter(frontmatter);
 				const { startDate, tags } = didaConfig;
@@ -137,6 +123,7 @@ export default class DiDaSyncPlugin extends Plugin {
 					.getItems({
 						startDate,
 						tags,
+						excludeTags: didaConfig.excludeTags,
 						projectId: didaConfig.projectId,
 						type: didaConfig.type,
 						taskId: didaConfig.taskId,
@@ -225,6 +212,42 @@ export default class DiDaSyncPlugin extends Plugin {
 				return true;
 			},
 		});
+	}
+
+	private transformFrontMatter(frontmatter: Record<string, any>) {
+		let config = frontmatter?.dida || frontmatter?.ticktick;
+		if (config) {
+			if (typeof config === "boolean") {
+				// @ts-expect-error
+				config = {};
+			}
+
+			if (frontmatter?.dida) {
+				config.type = ServeType.Dida;
+			}
+
+			if (frontmatter?.ticktick) {
+				config.type = ServeType.TickTick;
+			}
+
+			return config as DidaFrontMatter;
+		}
+
+		// 判断是否存在类似dida.xxx的配置, 将他们转换为dida的配置
+		const didaConfig: Partial<DidaFrontMatter> = {};
+		Object.keys(frontmatter).forEach((key) => {
+			if (key.startsWith("dida.")) {
+				didaConfig.type = ServeType.Dida;
+				// @ts-expect-error
+				didaConfig[key.replace("dida.", "")] = frontmatter[key];
+			} else if (key.startsWith("ticktick.")) {
+				didaConfig.type = ServeType.TickTick;
+				// @ts-expect-error
+				didaConfig[key.replace("ticktick.", "")] = frontmatter[key];
+			}
+		});
+
+		return didaConfig;
 	}
 
 	private registerPageHeaderAction() {

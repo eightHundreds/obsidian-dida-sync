@@ -11,6 +11,8 @@ module.exports = {
 			files: ["*.ts", "*.tsx"],
 			rules: {
 				"no-new": "off",
+				"@typescript-eslint/naming-convention": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
 				"@typescript-eslint/ban-ts-comment": "off",
 				"@typescript-eslint/consistent-type-imports": "off",
 				"@typescript-eslint/no-unsafe-call": "off",
