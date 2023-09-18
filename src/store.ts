@@ -1,32 +1,37 @@
-import {Atom, WritableAtom, atom, createStore} from 'jotai/vanilla';
-import {atomFamily} from 'jotai/vanilla/utils';
-import {DiDaSyncPluginSettings, ValueOf} from './types';
+import { Atom, WritableAtom, atom, createStore } from "jotai/vanilla";
+import { atomFamily } from "jotai/vanilla/utils";
+import { DiDaSyncPluginSettings, ValueOf } from "./types";
 
 const store = createStore();
 const settingAtom = atom<DiDaSyncPluginSettings>({
-  didaPassword: '',
-  didaUserName: '',
-  debug: false,
+	didaPassword: "",
+	didaUserName: "",
+	disablePageHeaderAction: false,
+	debug: false,
 });
 
 const settingAtomFamilyInternal = atomFamily<
-keyof DiDaSyncPluginSettings,
-WritableAtom<ValueOf<DiDaSyncPluginSettings>, [ValueOf<DiDaSyncPluginSettings>], void>
+	keyof DiDaSyncPluginSettings,
+	WritableAtom<
+		ValueOf<DiDaSyncPluginSettings>,
+		[ValueOf<DiDaSyncPluginSettings>],
+		void
+	>
 >(
-  key =>
-    atom(
-      get => get(settingAtom)[key],
-      (get, set, arg) => {
-        set(settingAtom, {
-          ...get(settingAtom),
-          [key]: arg,
-        });
-      },
-    ),
-  (a, b) => a === b,
+	(key) =>
+		atom(
+			(get) => get(settingAtom)[key],
+			(get, set, arg) => {
+				set(settingAtom, {
+					...get(settingAtom),
+					[key]: arg,
+				});
+			},
+		),
+	(a, b) => a === b,
 );
 
 const settingAtomFamily = <T extends keyof DiDaSyncPluginSettings>(key: T) =>
-  settingAtomFamilyInternal(key);
+	settingAtomFamilyInternal(key);
 
-export {settingAtom, settingAtomFamily, store};
+export { settingAtom, settingAtomFamily, store };

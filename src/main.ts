@@ -1,312 +1,319 @@
-import {MarkdownView, Notice, Plugin} from 'obsidian';
-import '@total-typescript/ts-reset';
-import path from 'path';
-import {TodoAppClientFacade} from './core/dida';
+import { MarkdownView, Notice, Plugin } from "obsidian";
+import "@total-typescript/ts-reset";
+import path from "path";
+import { TodoAppClientFacade } from "./core/dida";
 // @ts-expect-error
-import * as yamlFront from 'yaml-front-matter';
-import debug from 'debug';
-import {DiDaSyncPluginSettings, DidaConfig, DidaFrontMatter, ServeType, TaskStatus} from './types';
-import {isFulfilled} from './utils';
-import {t} from 'i18next';
-import DidaSettingTab from './settings';
-import {settingAtom, settingAtomFamily, store} from './store';
-import {PLUGIN_ID} from './constants';
-import MarkdownGenerator from './core/markdownGenerator';
-import './locale';
+import * as yamlFront from "yaml-front-matter";
+import debug from "debug";
+import {
+	DiDaSyncPluginSettings,
+	DidaConfig,
+	DidaFrontMatter,
+	ServeType,
+	TaskStatus,
+} from "./types";
+import { isFulfilled } from "./utils";
+import { t } from "i18next";
+import DidaSettingTab from "./settings";
+import { settingAtom, settingAtomFamily, store } from "./store";
+import { PLUGIN_ID } from "./constants";
+import MarkdownGenerator from "./core/markdownGenerator";
+import "./locale";
 
 const defaultSettings: DiDaSyncPluginSettings = {
-  didaPassword: '',
-  didaUserName: '',
-  debug: false,
-  disablePageHeaderAction: false,
+	didaPassword: "",
+	didaUserName: "",
+	debug: false,
+	disablePageHeaderAction: false,
 };
 
 export default class DiDaSyncPlugin extends Plugin {
-  didaClient: TodoAppClientFacade;
-  log: (...args: any[]) => any;
-  async onload() {
-    await this.loadSettings();
-    this.didaClient = new TodoAppClientFacade({
-      username: this.settings.didaUserName,
-      password: this.settings.didaPassword,
-    });
-    this.log = debug('dida365:plugin');
+	didaClient: TodoAppClientFacade;
+	log: (...args: any[]) => any;
+	async onload() {
+		await this.loadSettings();
+		this.didaClient = new TodoAppClientFacade({
+			username: this.settings.didaUserName,
+			password: this.settings.didaPassword,
+		});
+		this.log = debug("dida365:plugin");
 
-    if (this.settings.debug) {
-      debug.enable('dida365:*');
-    }
+		if (this.settings.debug) {
+			debug.enable("dida365:*");
+		}
 
-    this.registerCommends();
-    this.registerPageHeaderAction();
-    this.registerSettingChange();
-    this.addSettingTab(new DidaSettingTab(this.app, this));
-  }
+		this.registerCommends();
+		this.registerPageHeaderAction();
+		this.registerSettingChange();
+		this.addSettingTab(new DidaSettingTab(this.app, this));
+	}
 
-  public get settings() {
-    return store.get(settingAtom);
-  }
+	public get settings() {
+		return store.get(settingAtom);
+	}
 
-  public updateSetting<T extends keyof DiDaSyncPluginSettings>(
-    key: T,
-    val: DiDaSyncPluginSettings[T],
-  ) {
-    store.set(settingAtomFamily(key), val);
-    void this.saveSettings();
-  }
+	public updateSetting<T extends keyof DiDaSyncPluginSettings>(
+		key: T,
+		val: DiDaSyncPluginSettings[T],
+	) {
+		store.set(settingAtomFamily(key), val);
+		void this.saveSettings();
+	}
 
-  public async saveSettings() {
-    await this.saveData(this.settings);
-  }
+	public async saveSettings() {
+		await this.saveData(this.settings);
+	}
 
-  private registerCommends() {
-    this.addCommand({
-      id: 'sync-current-file',
-      name: t('syncToDoList'),
-      editorCheckCallback: (checking, editor, ctx) => {
-        this.log(`命令${checking ? '检测中' : '执行中'}`);
-        const frontmatter = yamlFront.loadFront(
-          editor.getValue(),
-        ) as any;
-        const didaFrontMatter = (frontmatter?.dida
-					|| frontmatter?.ticktick) as DidaFrontMatter;
+	private registerCommends() {
+		this.addCommand({
+			id: "sync-current-file",
+			name: t("syncToDoList"),
+			editorCheckCallback: (checking, editor, ctx) => {
+				this.log(`命令${checking ? "检测中" : "执行中"}`);
+				const frontmatter = yamlFront.loadFront(
+					editor.getValue(),
+				) as any;
+				const didaFrontMatter = (frontmatter?.dida ||
+					frontmatter?.ticktick) as DidaFrontMatter;
 
-        if (checking) {
-          this.log('editor check callback', didaFrontMatter);
-          if (!didaFrontMatter) {
-            return false;
-          }
+				if (checking) {
+					this.log("editor check callback", didaFrontMatter);
+					if (!didaFrontMatter) {
+						return false;
+					}
 
-          return true;
-        }
+					return true;
+				}
 
-        if (!checking && !didaFrontMatter) {
-          new Notice(t('configNotFound'));
-          return;
-        }
+				if (!checking && !didaFrontMatter) {
+					new Notice(t("configNotFound"));
+					return;
+				}
 
-        function getDidaConfigFromFrontmatter(
-          frontmatter: any,
-        ) {
-          let didaConfig = (frontmatter?.dida
-						|| frontmatter?.ticktick) as DidaFrontMatter;
+				function getDidaConfigFromFrontmatter(frontmatter: any) {
+					let didaConfig = (frontmatter?.dida ||
+						frontmatter?.ticktick) as DidaFrontMatter;
 
-          if (typeof didaConfig === 'boolean') {
-            // @ts-expect-error
-            didaConfig = {};
-          }
+					if (typeof didaConfig === "boolean") {
+						// @ts-expect-error
+						didaConfig = {};
+					}
 
-          if (frontmatter?.dida) {
-            didaConfig.type = ServeType.Dida;
-          }
+					if (frontmatter?.dida) {
+						didaConfig.type = ServeType.Dida;
+					}
 
-          if (frontmatter?.ticktick) {
-            didaConfig.type = ServeType.TickTick;
-          }
+					if (frontmatter?.ticktick) {
+						didaConfig.type = ServeType.TickTick;
+					}
 
-          const tags = Array.isArray(didaConfig.tags)
-            ? didaConfig.tags
-            : [didaConfig.tags].filter((v: any): v is string =>
-              Boolean(v),
-            );
-          const {startDate} = didaConfig;
-          const {status} = didaConfig;
-          let finalStatus: TaskStatus | undefined;
-          if (status === 'completed') {
-            finalStatus = TaskStatus.Completed;
-          } else if (status === 'uncompleted') {
-            finalStatus = TaskStatus.UnCompleted;
-          }
+					const tags = Array.isArray(didaConfig.tags)
+						? didaConfig.tags
+						: [didaConfig.tags].filter((v: any): v is string =>
+								Boolean(v),
+						  );
+					const { startDate } = didaConfig;
+					const { status } = didaConfig;
+					let finalStatus: TaskStatus | undefined;
+					if (status === "completed") {
+						finalStatus = TaskStatus.Completed;
+					} else if (status === "uncompleted") {
+						finalStatus = TaskStatus.UnCompleted;
+					}
 
-          return {
-            ...didaConfig,
-            tags,
-            startDate,
-            status: finalStatus,
-          } as unknown as DidaConfig;
-        }
+					return {
+						...didaConfig,
+						tags,
+						startDate,
+						status: finalStatus,
+					} as unknown as DidaConfig;
+				}
 
-        const didaConfig = getDidaConfigFromFrontmatter(frontmatter);
-        const {startDate, tags} = didaConfig;
+				const didaConfig = getDidaConfigFromFrontmatter(frontmatter);
+				const { startDate, tags } = didaConfig;
 
-        new Notice(t('beginSync'));
-        void this.didaClient
-          .getItems({
-            startDate,
-            tags,
-            projectId: didaConfig.projectId,
-            type: didaConfig.type,
-            taskId: didaConfig.taskId,
-            status: didaConfig.status,
-          })
-          .then(async tasks => {
-            const generator = new MarkdownGenerator(this);
-            const mdSegments = await Promise.allSettled(
-              tasks.map(async item => {
-                const downloadResult
-									= await this.didaClient.downloadAttachment(item, didaFrontMatter.type);
-                const files = downloadResult
-                  .filter(isFulfilled)
-                  .map(res => res.value);
+				new Notice(t("beginSync"));
+				void this.didaClient
+					.getItems({
+						startDate,
+						tags,
+						projectId: didaConfig.projectId,
+						type: didaConfig.type,
+						taskId: didaConfig.taskId,
+						status: didaConfig.status,
+					})
+					.then(async (tasks) => {
+						const generator = new MarkdownGenerator(this);
+						const mdSegments = await Promise.allSettled(
+							tasks.map(async (item) => {
+								const downloadResult =
+									await this.didaClient.downloadAttachment(
+										item,
+										didaFrontMatter.type,
+									);
+								const files = downloadResult
+									.filter(isFulfilled)
+									.map((res) => res.value);
 
-                // 下载附件
-                const savedFiles = await Promise.allSettled(
-                  files.map(async file => {
-                    const fileExist = this.app.vault
-                      .getFiles()
-                      .find(_file =>
-                        _file.path.includes(file.id),
-                      );
-                    if (fileExist) {
-                      return fileExist;
-                    }
-
-                    const obFile
-											= await this.app.vault.createBinary(
-											  // @ts-expect-error
-											  (await this.app.vault.getAvailablePathForAttachments(
-											    `${file.id}`,
-											    path
-											      .extname(file.path)
-											      .replace('.', ''),
-											    ctx.file,
-											  )) as string,
-											  file.arrayBuffer,
+								// 下载附件
+								const savedFiles = await Promise.allSettled(
+									files.map(async (file) => {
+										const fileExist = this.app.vault
+											.getFiles()
+											.find((_file) =>
+												_file.path.includes(file.id),
 											);
-                    return obFile;
-                  }),
-                );
+										if (fileExist) {
+											return fileExist;
+										}
 
-                return generator.taskToMarkdown(
-                  item,
-                  savedFiles
-                    .filter(isFulfilled)
-                    .map(a => a.value),
-                );
-              }),
-            );
-            const mdText = mdSegments
-              .filter(isFulfilled)
-              .map(v => v.value)
-              .join('\n');
+										const obFile =
+											await this.app.vault.createBinary(
+												// @ts-expect-error
+												(await this.app.vault.getAvailablePathForAttachments(
+													`${file.id}`,
+													path
+														.extname(file.path)
+														.replace(".", ""),
+													ctx.file,
+												)) as string,
+												file.arrayBuffer,
+											);
+										return obFile;
+									}),
+								);
 
-            const currentText = editor.getValue();
-            // 获得frontmatter的位置
-            const startOfFrontmatter = currentText.indexOf('---');
-            const endOfFrontmatter = currentText.indexOf(
-              '---',
-              startOfFrontmatter + 3,
-            );
-            const lineOfFrontmatter = currentText
-              .substring(startOfFrontmatter, endOfFrontmatter)
-              .split('\n').length;
+								return generator.taskToMarkdown(
+									item,
+									savedFiles
+										.filter(isFulfilled)
+										.map((a) => a.value),
+								);
+							}),
+						);
+						const mdText = mdSegments
+							.filter(isFulfilled)
+							.map((v) => v.value)
+							.join("\n");
 
-            editor.replaceRange(
-              mdText,
-              {line: lineOfFrontmatter, ch: 0},
-              {
-                line: editor.lastLine() + 1,
-                ch: 0,
-              },
-            );
-            new Notice(t('syncSuccess'));
-          })
-          .catch(err => {
-            new Notice(`${t('syncFailed')} ${err.message}`);
-            this.log(err);
-          });
+						const currentText = editor.getValue();
+						// 获得frontmatter的位置
+						const startOfFrontmatter = currentText.indexOf("---");
+						const endOfFrontmatter = currentText.indexOf(
+							"---",
+							startOfFrontmatter + 3,
+						);
+						const lineOfFrontmatter = currentText
+							.substring(startOfFrontmatter, endOfFrontmatter)
+							.split("\n").length;
 
-        return true;
-      },
-    });
-  }
+						editor.replaceRange(
+							mdText,
+							{ line: lineOfFrontmatter, ch: 0 },
+							{
+								line: editor.lastLine() + 1,
+								ch: 0,
+							},
+						);
+						new Notice(t("syncSuccess"));
+					})
+					.catch((err) => {
+						new Notice(`${t("syncFailed")} ${err.message}`);
+						this.log(err);
+					});
 
-  private registerPageHeaderAction() {
-    this.app.workspace.on('layout-change', () => {
-      this.app.workspace.iterateAllLeaves(leaf => {
-        const {view} = leaf;
-        if (!(view instanceof MarkdownView)) {
-          return;
-        }
+				return true;
+			},
+		});
+	}
 
-        const syncBtn = view.actionsEl.querySelector(
-          `a[aria-label="${t('beginSync')}"]`,
-        );
+	private registerPageHeaderAction() {
+		this.app.workspace.on("layout-change", () => {
+			this.app.workspace.iterateAllLeaves((leaf) => {
+				const { view } = leaf;
+				if (!(view instanceof MarkdownView)) {
+					return;
+				}
 
-        if (this.settings.disablePageHeaderAction) {
-          if (syncBtn) {
-            syncBtn.remove();
-          }
+				const syncBtn = view.actionsEl.querySelector(
+					`a[aria-label="${t("beginSync")}"]`,
+				);
 
-          return;
-        }
+				if (this.settings.disablePageHeaderAction) {
+					if (syncBtn) {
+						syncBtn.remove();
+					}
 
-        const frontmatter = yamlFront.loadFront(
-          view.editor.getValue(),
-        ) as any;
-        const hasDidaFlag = frontmatter?.dida || frontmatter?.ticktick;
+					return;
+				}
 
-        if (hasDidaFlag && !syncBtn) {
-          view.addAction('check-circle', t('beginSync'), async () => {
-            this.app.commands.executeCommandById(
-              `${PLUGIN_ID}:sync-current-file`,
-            );
-          });
-        } else if (!hasDidaFlag && syncBtn) {
-          syncBtn.remove();
-        }
-      });
-    });
+				const frontmatter = yamlFront.loadFront(
+					view.editor.getValue(),
+				) as any;
+				const hasDidaFlag = frontmatter?.dida || frontmatter?.ticktick;
 
-    // 销毁时把action的按钮移除
-    this.register(() => {
-      this.app.workspace.iterateAllLeaves(leaf => {
-        const {view} = leaf;
-        if (!(view instanceof MarkdownView)) {
-          return;
-        }
+				if (hasDidaFlag && !syncBtn) {
+					view.addAction("check-circle", t("beginSync"), async () => {
+						this.app.commands.executeCommandById(
+							`${PLUGIN_ID}:sync-current-file`,
+						);
+					});
+				} else if (!hasDidaFlag && syncBtn) {
+					syncBtn.remove();
+				}
+			});
+		});
 
-        const syncBtn = view.actionsEl.querySelector(
-          `a[aria-label="${t('beginSync')}"]`,
-        );
-        syncBtn?.remove();
-      });
-    });
-  }
+		// 销毁时把action的按钮移除
+		this.register(() => {
+			this.app.workspace.iterateAllLeaves((leaf) => {
+				const { view } = leaf;
+				if (!(view instanceof MarkdownView)) {
+					return;
+				}
 
-  private registerSettingChange() {
-    this.register(
-      store.sub(settingAtomFamily('didaUserName'), () => {
-        this.didaClient = new TodoAppClientFacade({
-          username: this.settings.didaUserName,
-          password: this.settings.didaPassword,
-        });
-      }),
-    );
+				const syncBtn = view.actionsEl.querySelector(
+					`a[aria-label="${t("beginSync")}"]`,
+				);
+				syncBtn?.remove();
+			});
+		});
+	}
 
-    this.register(
-      store.sub(settingAtomFamily('didaPassword'), () => {
-        this.didaClient = new TodoAppClientFacade({
-          username: this.settings.didaUserName,
-          password: this.settings.didaPassword,
-        });
-      }),
-    );
+	private registerSettingChange() {
+		this.register(
+			store.sub(settingAtomFamily("didaUserName"), () => {
+				this.didaClient = new TodoAppClientFacade({
+					username: this.settings.didaUserName,
+					password: this.settings.didaPassword,
+				});
+			}),
+		);
 
-    this.register(
-      store.sub(settingAtomFamily('debug'), () => {
-        if (this.settings.debug) {
-          debug.enable('dida365:*');
-        } else {
-          debug.disable();
-        }
-      }),
-    );
-  }
+		this.register(
+			store.sub(settingAtomFamily("didaPassword"), () => {
+				this.didaClient = new TodoAppClientFacade({
+					username: this.settings.didaUserName,
+					password: this.settings.didaPassword,
+				});
+			}),
+		);
 
-  private async loadSettings() {
-    store.set(settingAtom, {
-      ...defaultSettings,
-      ...(await this.loadData()),
-    });
-  }
+		this.register(
+			store.sub(settingAtomFamily("debug"), () => {
+				if (this.settings.debug) {
+					debug.enable("dida365:*");
+				} else {
+					debug.disable();
+				}
+			}),
+		);
+	}
+
+	private async loadSettings() {
+		store.set(settingAtom, {
+			...defaultSettings,
+			...(await this.loadData()),
+		});
+	}
 }

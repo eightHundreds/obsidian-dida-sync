@@ -4,34 +4,28 @@ module.exports = {
 		es2021: true,
 		node: true,
 	},
-	extends: 'xo',
+	extends: ["xo", "plugin:prettier/recommended"],
 	overrides: [
 		{
-			extends: [
-				'xo-typescript',
-			],
-			files: [
-				'*.ts',
-				'*.tsx',
-			],
+			extends: ["xo-typescript", "plugin:prettier/recommended"],
+			files: ["*.ts", "*.tsx"],
 			rules: {
-				'no-new': 'off',
-				'@typescript-eslint/ban-ts-comment': 'off',
-				'@typescript-eslint/indent': ['error', 2],
-				'@typescript-eslint/consistent-type-imports': 'off',
-				'@typescript-eslint/no-unsafe-call': 'off',
-				'@typescript-eslint/no-unsafe-assignment': 'off',
-				'@typescript-eslint/restrict-template-expressions': 'off',
-				'@typescript-eslint/consistent-type-definitions': 'off',
-				'no-mixed-spaces-and-tabs': 'off',
+				"no-new": "off",
+				"@typescript-eslint/ban-ts-comment": "off",
+				"@typescript-eslint/consistent-type-imports": "off",
+				"@typescript-eslint/no-unsafe-call": "off",
+				"@typescript-eslint/no-unsafe-assignment": "off",
+				"@typescript-eslint/restrict-template-expressions": "off",
+				"@typescript-eslint/consistent-type-definitions": "off",
+				"no-mixed-spaces-and-tabs": "off",
 			},
 		},
 	],
 	parserOptions: {
-		ecmaVersion: 'latest',
-		sourceType: 'module',
+		ecmaVersion: "latest",
+		sourceType: "module",
 	},
 	rules: {
-		'@typescript-eslint/consistent-type-imports': 'off',
+		"@typescript-eslint/consistent-type-imports": "off",
 	},
 };

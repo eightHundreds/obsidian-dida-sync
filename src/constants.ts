@@ -1,2 +1,1 @@
-
-export const PLUGIN_ID = 'dida-sync';
+export const PLUGIN_ID = "dida-sync";

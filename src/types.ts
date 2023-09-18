@@ -1,82 +1,81 @@
 export enum ServeType {
-  Dida = 'dida',
-  TickTick = 'ticktick',
+	Dida = "dida",
+	TickTick = "ticktick",
 }
 
 export enum TaskStatus {
-  UnCompleted = 0,
-  Abandoned = -1,
-  Completed = 2,
+	UnCompleted = 0,
+	Abandoned = -1,
+	Completed = 2,
 }
 export type DiDaSyncPluginSettings = {
-  didaPassword: string;
-  didaUserName: string;
-  disablePageHeaderAction: boolean;
-  debug: boolean;
+	didaPassword: string;
+	didaUserName: string;
+	disablePageHeaderAction: boolean;
+	debug: boolean;
 };
 
 export type DidaConfig = {
-  /**
+	/**
 	 * 标签
 	 */
-  tags?: string[] | string;
-  /**
-   * 任务
-   */
-  taskId?: string;
-  /**
+	tags?: string[] | string;
+	/**
+	 * 任务
+	 */
+	taskId?: string;
+	/**
 	 * 项目Id
 	 */
-  projectId?: string;
-  /**
+	projectId?: string;
+	/**
 	 * 要同步数据的截止时间
 	 */
-  startDate?: string;
-  /**
-   * 任务状态
-   */
-  status?: TaskStatus;
-  /**
+	startDate?: string;
+	/**
+	 * 任务状态
+	 */
+	status?: TaskStatus;
+	/**
 	 * 服务
 	 */
-  type: ServeType;
+	type: ServeType;
 };
 
-export type DidaFrontMatter = Omit<DidaConfig, 'status'> & {
-  status: 'completed' | 'uncompleted';
+export type DidaFrontMatter = Omit<DidaConfig, "status"> & {
+	status: "completed" | "uncompleted";
 };
 
 export type ValueOf<T> = T[keyof T];
 
-declare module 'obsidian' {
+declare module "obsidian" {
+	interface App {
+		commands: {
+			commands: Record<string, Command>;
+			executeCommandById: (id: string) => void;
+		};
+		plugins: {
+			manifests: Record<string, PluginManifest>;
+		};
+		statusBar: {
+			containerEl: HTMLElement;
+		};
+		appId: string;
+		isMobile: boolean;
+		setting: {
+			closeActiveTab: () => void;
+			openTabById: (id: string) => void;
+			activeTab: {
+				containerEl: HTMLElement;
+			};
+		};
+	}
 
-  interface App {
-    commands: {
-      commands: Record<string, Command>;
-      executeCommandById: (id: string) => void;
-    };
-    plugins: {
-      manifests: Record<string, PluginManifest>;
-    };
-    statusBar: {
-      containerEl: HTMLElement;
-    };
-    appId: string;
-    isMobile: boolean;
-    setting: {
-      closeActiveTab: () => void;
-      openTabById: (id: string) => void;
-      activeTab: {
-        containerEl: HTMLElement;
-      };
-    };
-  }
+	interface Vault {
+		getConfig: (key: string) => any;
+	}
 
-  interface Vault {
-    getConfig: (key: string) => any;
-  }
-
-  interface ItemView {
-    actionsEl: HTMLDivElement;
-  }
+	interface ItemView {
+		actionsEl: HTMLDivElement;
+	}
 }
