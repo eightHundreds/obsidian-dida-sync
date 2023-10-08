@@ -230,6 +230,21 @@ export default class DiDaSyncPlugin extends Plugin {
 	}
 
 	private transformFrontMatter(frontmatter: Record<string, any>) {
+		// 判断是否存在类似dida.xxx的配置, 将他们转换为dida的配置
+		const didaConfig: Partial<DidaFrontMatter> = {};
+		Object.keys(frontmatter).forEach((key) => {
+			if (key.startsWith("dida.")) {
+				didaConfig.type = ServeType.Dida;
+				// @ts-expect-error
+				didaConfig[key.replace("dida.", "")] = frontmatter[key];
+			} else if (key.startsWith("ticktick.")) {
+				didaConfig.type = ServeType.TickTick;
+				// @ts-expect-error
+				didaConfig[key.replace("ticktick.", "")] = frontmatter[key];
+			}
+		});
+
+		// 旧配置的兼容
 		let config = frontmatter?.dida || frontmatter?.ticktick;
 		if (config) {
 			if (typeof config === "boolean") {
@@ -245,22 +260,8 @@ export default class DiDaSyncPlugin extends Plugin {
 				config.type = ServeType.TickTick;
 			}
 
-			return config as DidaFrontMatter;
+			return Object.assign(config, didaConfig);
 		}
-
-		// 判断是否存在类似dida.xxx的配置, 将他们转换为dida的配置
-		const didaConfig: Partial<DidaFrontMatter> = {};
-		Object.keys(frontmatter).forEach((key) => {
-			if (key.startsWith("dida.")) {
-				didaConfig.type = ServeType.Dida;
-				// @ts-expect-error
-				didaConfig[key.replace("dida.", "")] = frontmatter[key];
-			} else if (key.startsWith("ticktick.")) {
-				didaConfig.type = ServeType.TickTick;
-				// @ts-expect-error
-				didaConfig[key.replace("ticktick.", "")] = frontmatter[key];
-			}
-		});
 
 		return didaConfig;
 	}
