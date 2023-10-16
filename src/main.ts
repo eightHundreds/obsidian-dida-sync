@@ -27,6 +27,65 @@ const defaultSettings: DiDaSyncPluginSettings = {
 	disablePageHeaderAction: false,
 };
 
+function transformFrontMatter(frontmatter: Record<string, any>) {
+	// 判断是否存在类似dida.xxx的配置, 将他们转换为dida的配置
+	const didaConfig: Partial<DidaFrontMatter> = {};
+	Object.keys(frontmatter).forEach((key) => {
+		if (key.startsWith("dida.")) {
+			didaConfig.type = ServeType.Dida;
+			// @ts-expect-error
+			didaConfig[key.replace("dida.", "")] = frontmatter[key];
+		} else if (key.startsWith("ticktick.")) {
+			didaConfig.type = ServeType.TickTick;
+			// @ts-expect-error
+			didaConfig[key.replace("ticktick.", "")] = frontmatter[key];
+		}
+	});
+
+	// 旧配置的兼容
+	let config = frontmatter?.dida || frontmatter?.ticktick;
+	if (config) {
+		if (typeof config === "boolean") {
+			config = {};
+		}
+
+		if (frontmatter?.dida) {
+			config.type = ServeType.Dida;
+		}
+
+		if (frontmatter?.ticktick) {
+			config.type = ServeType.TickTick;
+		}
+
+		return Object.assign(config, didaConfig);
+	}
+
+	return didaConfig;
+}
+
+const getDidaConfigFromFrontmatter = (frontmatter: any) => {
+	const didaConfig = transformFrontMatter(frontmatter);
+
+	const tags = Array.isArray(didaConfig.tags)
+		? didaConfig.tags
+		: [didaConfig.tags].filter((v: any): v is string => Boolean(v));
+	const { startDate } = didaConfig;
+	const { status } = didaConfig;
+	let finalStatus: TaskStatus | undefined;
+	if (status === "completed") {
+		finalStatus = TaskStatus.Completed;
+	} else if (status === "uncompleted") {
+		finalStatus = TaskStatus.UnCompleted;
+	}
+
+	return {
+		...didaConfig,
+		tags,
+		startDate,
+		status: finalStatus,
+	} as unknown as DidaConfig;
+};
+
 export default class DiDaSyncPlugin extends Plugin {
 	didaClient: TodoAppClientFacade;
 	log: (...args: any[]) => any;
@@ -70,10 +129,12 @@ export default class DiDaSyncPlugin extends Plugin {
 			name: t("syncToDoList"),
 			editorCheckCallback: (checking, editor, ctx) => {
 				this.log(`命令${checking ? "检测中" : "执行中"}`);
-				const frontmatter = yamlFront.loadFront(
+				this.log(
+					`version: ${this.app.plugins.manifests[PLUGIN_ID].version}`,
+				);
+				const { hashFrontMatter, frontmatter } = this.parserFrontMatter(
 					editor.getValue(),
-				) as any;
-				const hashFrontMatter = this.checkHasDidaConfig(frontmatter);
+				);
 
 				if (checking) {
 					this.log("editor check callback", hashFrontMatter);
@@ -84,40 +145,16 @@ export default class DiDaSyncPlugin extends Plugin {
 					return true;
 				}
 
-				if (!checking && !hashFrontMatter) {
+				if (!hashFrontMatter) {
 					new Notice(t("configNotFound"));
 					return;
 				}
 
-				const getDidaConfigFromFrontmatter = (frontmatter: any) => {
-					const didaConfig = this.transformFrontMatter(frontmatter);
-
-					const tags = Array.isArray(didaConfig.tags)
-						? didaConfig.tags
-						: [didaConfig.tags].filter((v: any): v is string =>
-								Boolean(v),
-						  );
-					const { startDate } = didaConfig;
-					const { status } = didaConfig;
-					let finalStatus: TaskStatus | undefined;
-					if (status === "completed") {
-						finalStatus = TaskStatus.Completed;
-					} else if (status === "uncompleted") {
-						finalStatus = TaskStatus.UnCompleted;
-					}
-
-					return {
-						...didaConfig,
-						tags,
-						startDate,
-						status: finalStatus,
-					} as unknown as DidaConfig;
-				};
+				new Notice(t("beginSync"));
 
 				const didaConfig = getDidaConfigFromFrontmatter(frontmatter);
 				const { startDate, tags } = didaConfig;
 
-				new Notice(t("beginSync"));
 				void this.didaClient
 					.getItems({
 						startDate,
@@ -219,6 +256,12 @@ export default class DiDaSyncPlugin extends Plugin {
 		});
 	}
 
+	private parserFrontMatter(value: string) {
+		const frontmatter = yamlFront.loadFront(value) as any;
+		const hashFrontMatter = this.checkHasDidaConfig(frontmatter);
+		return { hashFrontMatter, frontmatter };
+	}
+
 	private checkHasDidaConfig(frontmatter: any): boolean {
 		return (
 			Boolean(frontmatter?.dida) ||
@@ -227,43 +270,6 @@ export default class DiDaSyncPlugin extends Plugin {
 				return key.startsWith("dida.") || key.startsWith("ticktick.");
 			})
 		);
-	}
-
-	private transformFrontMatter(frontmatter: Record<string, any>) {
-		// 判断是否存在类似dida.xxx的配置, 将他们转换为dida的配置
-		const didaConfig: Partial<DidaFrontMatter> = {};
-		Object.keys(frontmatter).forEach((key) => {
-			if (key.startsWith("dida.")) {
-				didaConfig.type = ServeType.Dida;
-				// @ts-expect-error
-				didaConfig[key.replace("dida.", "")] = frontmatter[key];
-			} else if (key.startsWith("ticktick.")) {
-				didaConfig.type = ServeType.TickTick;
-				// @ts-expect-error
-				didaConfig[key.replace("ticktick.", "")] = frontmatter[key];
-			}
-		});
-
-		// 旧配置的兼容
-		let config = frontmatter?.dida || frontmatter?.ticktick;
-		if (config) {
-			if (typeof config === "boolean") {
-				// @ts-expect-error
-				config = {};
-			}
-
-			if (frontmatter?.dida) {
-				config.type = ServeType.Dida;
-			}
-
-			if (frontmatter?.ticktick) {
-				config.type = ServeType.TickTick;
-			}
-
-			return Object.assign(config, didaConfig);
-		}
-
-		return didaConfig;
 	}
 
 	private registerPageHeaderAction() {
