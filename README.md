@@ -1,3 +1,5 @@
+# 我用不滴答清单了 (I don't use TickTick anymore. too expensive)
+
 # 滴答清单同步
 
 [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg?style=flat-square)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
